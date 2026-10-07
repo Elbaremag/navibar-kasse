@@ -1,0 +1,578 @@
+<!DOCTYPE html>
+<html lang="de"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Navibar Kasse</title>
+<style>
+:root{--bg:#eaf0f4;--ink:#0b2a4a;--mut:#5f7587;--line:#d3dde5;--soft:#e8eef3;--blue:#1b5f8c;--green:#238a76;--orange:#d9822b;--red:#c0392b;--gold:#c9a227;--navy:#0b2a4a}
+*{box-sizing:border-box}html,body{margin:0}
+body{font:17px/1.4 system-ui,Segoe UI,sans-serif;color:var(--ink);background:var(--bg);-webkit-tap-highlight-color:transparent}
+header{display:flex;align-items:center;gap:8px;padding:10px 16px;border-bottom:4px solid var(--gold);position:sticky;top:0;background:linear-gradient(90deg,#0b2a4a,#12466f);color:#fff;z-index:5;flex-wrap:wrap}header button.on{background:var(--gold);border-color:var(--gold);color:#0b2a4a;font-weight:700}
+header h1{font-size:22px;margin:0 12px 0 0;color:#fff}
+nav{display:flex;gap:8px;flex-wrap:wrap}
+button{font:inherit;min-height:48px;min-width:48px;padding:8px 16px;border:2px solid var(--line);background:#fff;color:var(--ink);border-radius:12px;cursor:pointer}
+button:active{transform:scale(.97)}
+button.on{background:var(--blue);border-color:var(--blue);color:#fff}
+.b{background:var(--blue);border-color:var(--blue);color:#fff}.g{background:var(--green);border-color:var(--green);color:#fff}
+.o{background:var(--orange);border-color:var(--orange);color:#fff}.r{background:#fff;border-color:var(--red);color:var(--red)}
+main{padding:16px;max-width:1100px;margin:auto}
+.banner{background:#fff4e5;border:2px solid var(--orange);border-radius:12px;padding:12px;margin-bottom:12px;display:flex;gap:12px;align-items:center;justify-content:space-between}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:12px}
+.card{border:2px solid var(--line);border-radius:14px;padding:12px;background:#fff;text-align:left;min-height:84px}
+.card.paid{border-color:var(--green);background:#eefaf3}.card.open{border-left:8px solid var(--orange)}
+.card.b{background:var(--blue);border-color:var(--blue);color:#fff}
+.card.o{background:var(--orange);border-color:var(--orange);color:#fff}
+.card small,.mut{color:var(--mut)}.tag{display:inline-block;padding:0 8px;border-radius:8px;color:#fff;font-size:14px}
+.A{background:var(--blue)}.T{background:var(--orange)}
+input,select{font:inherit;min-height:48px;padding:8px 12px;border:2px solid var(--line);border-radius:10px;width:100%}
+.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:8px 0}.row>*{flex:1}.row>button{flex:0 0 auto}
+table{width:100%;border-collapse:collapse}td,th{padding:8px;border-bottom:1px solid var(--line);text-align:left}td.n,th.n{text-align:right}
+.ov{position:fixed;inset:0;background:rgba(22,50,74,.5);display:flex;align-items:flex-start;justify-content:center;overflow:auto;padding:12px;z-index:10}
+.box{background:#fff;border-radius:16px;padding:16px;width:100%;max-width:760px}
+.total{font-size:28px;font-weight:700}.neg{color:var(--green)}
+canvas{max-width:100%;image-rendering:pixelated;border:1px solid var(--line)}
+.bdg{display:inline-block;padding:2px 10px;border-radius:999px;color:#fff;font-size:14px;font-weight:600;margin-left:8px;vertical-align:middle;pointer-events:none;user-select:none}
+.bdg.gr{background:var(--green)}.bdg.rd{background:var(--red)}
+.toast{position:fixed;top:72px;left:50%;transform:translateX(-50%);background:var(--green);color:#fff;padding:10px 20px;border-radius:12px;z-index:60;font-weight:600;box-shadow:0 4px 14px rgba(0,0,0,.25)}
+#kb{display:none;position:fixed;left:0;right:0;bottom:0;background:#e9eef3;border-top:2px solid var(--line);padding:8px;z-index:50;user-select:none}
+#kb .kr{display:flex;gap:6px;margin-bottom:6px;justify-content:center}
+#kb button{flex:1;max-width:84px;min-height:52px;padding:0;font-size:20px}
+#kb button[data-k=" "]{max-width:none;flex:5}#kb button[data-k=DONE]{max-width:none;flex:1;background:var(--green);border-color:var(--green);color:#fff}
+.kbopen main{padding-bottom:calc(var(--kbh,480px) + 10px)}.kbopen .ov{padding-bottom:var(--kbh,480px)}
+textarea{font:inherit}
+.dtop{display:flex;gap:8px;align-items:center;margin-bottom:8px}.dtop>button{flex:0 0 auto}.dtop .dtitle{flex:1;text-align:center;font-size:24px;font-weight:700}
+.stor{background:#c0392b;border-color:#c0392b;color:#fff}
+.det>.dleftcol{flex:1 1 auto;min-width:0;display:flex;flex-direction:column}
+.dleftcol>.dmain{flex:1 1 auto;min-height:0;display:flex;gap:10px}
+.cats{flex:0 0 170px;overflow:auto;display:flex;flex-direction:column;gap:6px}
+.ov .box .cat{min-height:54px;text-align:left;font-size:17px;border-radius:8px;border-left:9px solid var(--cc,#9aa0a6);background:#fff;padding:6px 10px}
+.ov .box .cat.on{background:var(--navy);color:#fff;border-color:var(--navy);border-left-color:var(--gold);font-weight:700}
+.dleft{flex:1 1 auto;min-width:0;display:flex;flex-direction:column}.dleft input{margin-bottom:8px}
+.tiles{flex:1;overflow:auto;display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:10px;align-content:start}
+.ov .box .tile{position:relative;display:flex;flex-direction:column;justify-content:space-between;text-align:left;min-height:100px;padding:10px 12px 8px 20px;border:1px solid var(--line);border-radius:8px;background:#fff;overflow:hidden}
+.tile:before{content:"";position:absolute;left:0;top:0;bottom:0;width:9px;background:var(--tc,#9aa0a6)}
+.tile b{font-size:18px}.tile span{font-size:14px;color:var(--mut)}.tile i{font-style:normal;font-size:21px;font-weight:600;align-self:flex-end}
+.tile.bon{--tc:#7a8a99;background:#eef2f5}
+.det>.dright{flex:0 0 440px;align-self:stretch}.dright{display:flex;flex-direction:column;background:#fff;border:1px solid var(--line);border-radius:10px;padding:10px;min-height:0}
+.bonhead{font-weight:700;color:var(--mut);margin-bottom:6px}
+.dright .escroll{flex:1 1 auto;max-height:none;overflow:auto}
+.pos{display:flex;gap:8px;align-items:center;padding:5px 0;border-bottom:1px solid var(--line);font-size:14px}.pos b{font-size:14px}.pos small{font-size:12px}.dhead{font-size:18px;font-weight:700;padding-bottom:6px;margin-bottom:4px;border-bottom:2px solid var(--navy)}.pos>div:first-child{flex:1}.pos small{display:block;color:var(--mut)}
+.pos .pb{display:flex;gap:6px}.ov .box .pos .pb button{min-width:46px;min-height:46px;padding:0;font-size:20px}
+.dsum .srow{display:flex;align-items:center;justify-content:space-between;font-size:30px;font-weight:700;padding:8px 0}
+.ov .box .kass{width:100%;min-height:86px;font-size:28px;font-weight:700;background:var(--green);border-color:var(--green);color:#fff}
+.dsum .row.sm{margin:6px 0 0}.ov .box .dsum .row.sm button{flex:1;min-height:52px;font-size:16px}
+.kbopen .box.det{height:calc(100dvh - var(--hh,0px) - var(--kbh,480px) - 36px)}
+@media(max-width:800px){.box.det{flex-direction:column}.det>.dright{flex:0 0 45%}}
+.box.det{height:calc(100vh - var(--hh,0px) - 24px);height:calc(100dvh - var(--hh,0px) - 24px);max-width:none;display:flex;flex-direction:row;gap:12px;overflow:hidden}
+.det .escroll{overflow:auto}
+.ov .box input,.ov .box select,.ov .box textarea{min-height:60px;font-size:21px}
+.ov .box button{min-height:60px;font-size:19px}.ov .box h2{font-size:26px}.ov .box label{font-size:18px;display:block}
+@media print{#kb{display:none!important}}
+@media print{header,button,.noprint{display:none!important}}
+
+/* ===== Touch-Optimierung: größere Flächen, Kunden-Liste volle Breite ===== */
+html,body{touch-action:manipulation}body{font-size:18px}
+button,.card,.tile,.cat{touch-action:manipulation;user-select:none;-webkit-user-select:none}
+button{min-height:58px;min-width:58px;padding:10px 20px;font-size:18px}
+header button{min-height:54px;font-size:19px}
+main{max-width:none}
+.grid{grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:14px}
+.card{min-height:108px;padding:14px}
+input,select{min-height:62px;font-size:20px}
+td,th{padding:14px 10px}
+.ov .box button{min-height:64px;font-size:20px}
+.ov .box .cat{min-height:80px;font-size:20px}.cats{flex-basis:200px}
+.tiles{grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:12px}
+.ov .box .tile{min-height:122px}.tile b{font-size:20px}.tile i{font-size:23px}
+.ov .box .pos .pb button{min-width:60px;min-height:60px}
+#kb{padding:10px}#kb .kr{gap:8px;margin-bottom:8px}
+#kb button{min-height:72px;font-size:27px;max-width:112px;border-radius:12px}
+#kb.num button{min-height:92px;font-size:36px;max-width:180px}
+#kb button[data-k=" "]{max-width:none}#kb button[data-k=DONE]{max-width:none;min-height:80px;font-size:28px}
+.ov .box .cat.misc{margin-top:auto;position:sticky;bottom:0}
+.mtb{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0;align-items:center}.ov .box .mtb button{min-height:54px;min-width:54px;padding:4px 12px;font-size:18px}
+#med img{max-width:100%}
+.ov .box .tile{background:var(--tc,#9aa0a6);color:#fff;border-color:transparent}.tile:before{display:none}.tile span{color:inherit;opacity:.88}
+.zc{flex:0 0 auto;min-width:64px;font-size:30px;padding:0}.zrow{margin-bottom:10px}
+</style></head><body>
+<header><h1>⚓ Navibar</h1><nav id="nav"></nav><span id="bk" style="margin-left:auto"></span><span id="tm"></span><span id="who" style="display:flex;gap:8px;align-items:center"></span></header>
+<main id="main"></main><div id="ov"></div>
+<script>
+/* ===== QR-Encoder (Byte-Modus, ECC L, Version 1-20, Maske 0) – komplett offline ===== */
+const QR=(()=>{
+const EC=[7,10,15,20,26,18,20,24,30,18,20,24,26,30,22,24,28,30,28,28],NB=[1,1,1,1,1,2,2,2,2,4,4,4,4,4,6,6,6,6,7,8];
+const raw=v=>{let r=(16*v+128)*v+64;if(v>=2){const a=Math.floor(v/7)+2;r-=(25*a-10)*a-55;if(v>=7)r-=36}return r};
+const cap=v=>Math.floor(raw(v)/8)-EC[v-1]*NB[v-1];
+const mul=(x,y)=>{let z=0;for(let i=7;i>=0;i--){z=(z<<1)^((z>>7)*0x11d);z^=((y>>i)&1)*x}return z};
+function rs(d,n){let g=[1];let r=1;for(let i=0;i<n;i++){const h=g.concat(0);for(let j=0;j<g.length;j++){h[j]=mul(g[j],r);if(j+1<h.length)h[j+1]^=g[j]}
+ // multiply g by (x - r)
+ g=[...Array(g.length+1)].map((_,k)=>(k<g.length?g[k]:0)^(k>0?mul(g[k-1],r):0));r=mul(r,2)}
+ g=g.slice(1);// leading coeff 1 removed
+ const res=new Array(n).fill(0);
+ for(const b of d){const f=b^res.shift();res.push(0);g.forEach((c,i)=>res[i]^=mul(c,f))}return res}
+function make(text){
+ const by=[...new TextEncoder().encode(text)];let v=1;while(v<=20&&cap(v)*8<4+(v<10?8:16)+8*by.length)v++;
+ if(v>20)throw 0;
+ let bits=[];const put=(x,n)=>{for(let i=n-1;i>=0;i--)bits.push((x>>i)&1)};
+ put(4,4);put(by.length,v<10?8:16);by.forEach(b=>put(b,8));
+ const cw=cap(v)*8;put(0,Math.min(4,cw-bits.length));while(bits.length%8)bits.push(0);
+ const data=[];for(let i=0;i<bits.length;i+=8)data.push(parseInt(bits.slice(i,i+8).join(''),2));
+ for(let p=0xec;data.length<cap(v);p^=0xfd)data.push(p);
+ const nb=NB[v-1],ec=EC[v-1],rc=Math.floor(raw(v)/8),ns=nb-rc%nb,sl=Math.floor(rc/nb);
+ const blocks=[];for(let i=0,k=0;i<nb;i++){const dl=sl-ec+(i<ns?0:1);const d=data.slice(k,k+dl);k+=dl;const e=rs(d,ec);if(i<ns)d.push(0);blocks.push(d.concat(e))}
+ const out=[];for(let i=0;i<blocks[0].length;i++)blocks.forEach((b,j)=>{if(i!=sl-ec||j>=ns)out.push(b[i])});
+ const S=v*4+17,M=[...Array(S)].map(()=>Array(S).fill(false)),F=[...Array(S)].map(()=>Array(S).fill(false));
+ const set=(x,y,d)=>{M[y][x]=d;F[y][x]=true};
+ for(let i=0;i<S;i++){set(6,i,i%2==0);set(i,6,i%2==0)}
+ const fin=(cx,cy)=>{for(let dy=-4;dy<=4;dy++)for(let dx=-4;dx<=4;dx++){const x=cx+dx,y=cy+dy,d=Math.max(Math.abs(dx),Math.abs(dy));if(x>=0&&y>=0&&x<S&&y<S)set(x,y,d!=2&&d!=4)}};
+ fin(3,3);fin(S-4,3);fin(3,S-4);
+ if(v>1){const n=Math.floor(v/7)+2,st=Math.ceil((v*4+4)/(n*2-2))*2,p=[6];for(let q=S-7;p.length<n;q-=st)p.splice(1,0,q);
+  p.forEach((a,i)=>p.forEach((b,j)=>{if((i==0&&j==0)||(i==0&&j==n-1)||(i==n-1&&j==0))return;
+   for(let dy=-2;dy<=2;dy++)for(let dx=-2;dx<=2;dx++)set(a+dx,b+dy,Math.max(Math.abs(dx),Math.abs(dy))!=1)}))}
+ // Formatbits (ECC L, Maske 0)
+ let d=8,r=d;for(let i=0;i<10;i++)r=(r<<1)^((r>>9)*0x537);const fb=((d<<10)|r)^0x5412,g=i=>((fb>>i)&1)==1;
+ for(let i=0;i<=5;i++)set(8,i,g(i));set(8,7,g(6));set(8,8,g(7));set(7,8,g(8));for(let i=9;i<15;i++)set(14-i,8,g(i));
+ for(let i=0;i<8;i++)set(S-1-i,8,g(i));for(let i=8;i<15;i++)set(8,S-15+i,g(i));set(8,S-8,true);
+ if(v>=7){let r=v;for(let i=0;i<12;i++)r=(r<<1)^((r>>11)*0x1f25);const vb=(v<<12)|r;for(let i=0;i<18;i++){const b=((vb>>i)&1)==1,a=S-11+i%3,c=Math.floor(i/3);set(a,c,b);set(c,a,b)}}
+ let i=0;for(let right=S-1;right>=1;right-=2){if(right==6)right=5;for(let vert=0;vert<S;vert++)for(let j=0;j<2;j++){const x=right-j,up=((right+1)&2)==0,y=up?S-1-vert:vert;
+  if(!F[y][x]&&i<out.length*8){M[y][x]=((out[i>>3]>>(7-(i&7)))&1)==1;i++}}}
+ for(let y=0;y<S;y++)for(let x=0;x<S;x++)if(!F[y][x]&&(x+y)%2==0)M[y][x]=!M[y][x];
+ return M}
+function draw(text){const M=make(text),c=document.createElement('canvas'),k=Math.max(3,Math.floor(380/(M.length+8))),n=(M.length+8)*k;c.width=c.height=n;
+ const x=c.getContext('2d');x.fillStyle='#fff';x.fillRect(0,0,n,n);x.fillStyle='#000';M.forEach((r,y)=>r.forEach((d,i)=>d&&x.fillRect((i+4)*k,(y+4)*k,k,k)));return c}
+return{draw}})();
+
+/* ===== Daten & Speichern (automatisch in localStorage) ===== */
+const KEY='navibar-kasse-v1';
+let S;try{S=JSON.parse(localStorage.getItem(KEY))}catch(e){}
+S=S||{drinks:[],customers:[],nextNo:1,lastBackup:''};
+const norm=()=>{S.vouchers=S.vouchers||[];S.usedNos=S.usedNos||[];S.customers.forEach(c=>{if(!S.usedNos.includes(c.no))S.usedNos.push(c.no);if(!c.created)c.created=Date.now()});S.mailTpl=S.mailTpl||{subj:'Deine Abrechnung – Navibar',body:'Hallo {Name},\n\nhier ist deine Abrechnung vom {Datum}:\n\n{Posten}\n\nSumme: {Summe}\n\nViele Grüße\nNavibar'};S.cashiers=S.cashiers||[];S.archive=S.archive||[];S.dellog=S.dellog||[];S.archive.forEach(a=>{if(!a.id)a.id=Math.random().toString(36).slice(2,9)});S.pin=S.pin||'1234';if(!S.cats){S.cats=[];S.drinks.forEach(d=>{if(d.type){let k=S.cats.find(c=>c.name==d.type);if(!k){k={id:Math.random().toString(36).slice(2,9),name:d.type};S.cats.push(k)}d.cat=k.id}})}};norm();
+const nextNo=()=>Math.max(S.nextNo,...S.usedNos.map(n=>n+1));
+const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){alert('Speichern im Browser fehlgeschlagen – bitte Backup exportieren!')}lbQueue()};
+const uid=()=>Math.random().toString(36).slice(2,9);
+const eur=c=>(c/100).toLocaleString('de-DE',{minimumFractionDigits:2,maximumFractionDigits:2})+' €';
+const cents=s=>Math.round(parseFloat(String(s).replace(',','.'))*100);
+const pr=(d,c)=>c.role=='A'&&d.priceA!=null?d.priceA:d.price;
+const sum=c=>c.entries.reduce((a,e)=>a+e.price*e.qty,0);
+const today=()=>new Date().toISOString().slice(0,10);
+const esc=s=>String(s).replace(/[&<>"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m]));
+let tab='kunden',q='',cur=null;
+const $=id=>document.getElementById(id);
+
+/* ===== Ansichten ===== */
+function renderMain(){
+ $('nav').innerHTML=[['kunden','Kunden'],['inaktiv','Deaktiviert'],['uebersicht','Übersicht'],['backup','Backup']].map(([k,t])=>`<button class="${tab==k?'on':''}" onclick="tab='${k}';render()">${t}</button>`).join('');
+ const m=$('main');
+ const ban=S.lastBackup!=today()&&LB.state!='on'?`<div class="banner noprint"><span>Heute wurde noch kein Backup erstellt.</span><button class="o" onclick="exportJ()">Backup jetzt speichern</button></div>`:'';
+ m.innerHTML=ban+({kunden:()=>vKunden(),inaktiv:vInakt,getraenke:vGetr,uebersicht:vUeb,auswertung:vAus,backup:vBackup})[tab]();
+ if(cur)detail();else $('ov').innerHTML=''}
+let sortBy='no';
+const fmt=ts=>new Date(ts).toLocaleString('de-DE',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});
+function vKunden(ina){
+ const t=q.toLowerCase(),act=x=>x.active!==false;
+ const l=S.customers.filter(c=>(ina?!act(c):act(c))&&(c.first+' '+c.last+' '+(c.nick||'')+' '+c.no).toLowerCase().includes(t));
+ l.sort((x,y)=>sortBy=='no'?x.no-y.no:(x[sortBy]||'').localeCompare(y[sortBy]||'','de')||x.no-y.no);
+ return `<div class="row"><input id="sq" placeholder="Suche: Nummer, Vorname, Nachname, Spitzname" value="${esc(q)}" oninput="q=this.value;const p=this.selectionStart;render();const i=$('sq');i.focus();i.setSelectionRange(p,p)">${ina?'':'<button class="b" onclick="formKunde()">+ Kunde</button>'}</div>
+ ${ina?'':'<div class="row"><input id="nn" inputmode="numeric" placeholder="Kundennummer eingeben"><button class="b" onclick="openNo()">Öffnen</button></div>'}
+ <div class="row noprint"><span class="mut" style="flex:0 0 auto">Sortieren:</span>${[['no','Nummer'],['first','Vorname'],['last','Nachname']].map(([k,n])=>`<button class="${sortBy==k?'on':''}" onclick="sortBy='${k}';render()">${n}</button>`).join('')}</div>
+ <div class="grid">${l.map(c=>`<button class="card ${c.entries.length?'open':'paid'}" onclick="cur='${c.id}';render()"><b>#${c.no} ${esc(c.first)} ${esc(c.last)}</b> <span class="tag ${c.role}">${c.role}</span>${c.nick?`<br><small>„${esc(c.nick)}“</small>`:''}<br><span class="total" style="font-size:22px">${eur(sum(c))}</span>${badge(c)}<br><small>${c.entries.length?'offen':'keine Buchungen'}</small></button>`).join('')||`<p class="mut">${ina?'Keine deaktivierten Kunden.':'Keine Kunden gefunden. Mit „+ Kunde“ anlegen.'}</p>`}</div>`}
+const vInakt=()=>vKunden(true);
+function vGetr(){return `<div class="row"><button class="b" onclick="formGetr()">+ Getränk</button></div><div class="row"><button onclick="xlTemplate()">⬇ Excel-Vorlage</button><button onclick="xlExport()">⬇ Getränke als Excel</button><button class="o" onclick="$('xli').click()">⬆ Excel importieren</button></div><input type="file" id="xli" accept=".xlsx,.csv" style="display:none" onchange="xlImport(this.files[0]);this.value=''">
+ <table><tr><th>Getränk</th><th>Kategorie</th><th>Menge</th><th class="n">Teilnehmer</th><th class="n">Ausbilder</th><th></th></tr>${S.drinks.slice().sort((a,b)=>a.name.localeCompare(b.name,'de')).map(d=>`<tr><td>${esc(d.name)}${d.priceSince?`<br><small class="mut">neuer Preis seit ${new Date(d.priceSince).toLocaleDateString('de-DE')}</small>`:''}</td><td>${esc(catName(d))}</td><td>${d.amount} ${d.unit}</td><td class="n">${eur(d.price)}</td><td class="n">${eur(d.priceA!=null?d.priceA:d.price)}</td><td class="n"><button onclick="formGetr('${d.id}')">Ändern</button> <button class="r" onclick="delGetr('${d.id}')">✕</button></td></tr>`).join('')}</table>
+ <h3>Getränkebons</h3><div class="row"><button class="o" onclick="formBonStamm()">+ Getränkebon</button></div><table>${S.vouchers.map(b=>`<tr><td>🎟 ${esc(b.name)}</td><td class="n">${eur(b.value)}</td><td class="n">${b.qty>0?b.qty+' Stück':'fragt nach'}</td><td class="n"><button onclick="formBonStamm('${b.id}')">Ändern</button> <button class="r" onclick="delBon('${b.id}')">✕</button></td></tr>`).join('')}</table>
+ <h3>E-Mail-Vorlage</h3><p class="mut">Betreff: ${esc(S.mailTpl.subj)}</p><div class="row"><button onclick="formMailTpl()">E-Mail-Vorlage bearbeiten</button></div>`}
+function vUeb(){const tot=S.customers.reduce((a,c)=>a+sum(c),0),op=S.customers.filter(c=>!c.paid).reduce((a,c)=>a+sum(c),0);
+ return `<table><tr><th>Nr.</th><th>Name</th><th>Typ</th><th class="n">Summe</th><th>Status</th><th class="noprint"></th></tr>${S.customers.filter(c=>sum(c)!==0).map(c=>`<tr><td>${c.no}</td><td>${esc(c.first)} ${esc(c.last)}${c.nick?` „${esc(c.nick)}“`:''}${c.active===false?' <small class="mut">(deaktiviert)</small>':''}</td><td>${c.role}</td><td class="n">${eur(sum(c))}</td><td>${badge(c)||'–'}</td><td class="noprint"><button onclick="cur='${c.id}';render()">Öffnen</button></td></tr>`).join('')}</table>
+ ${S.customers.some(c=>sum(c)!==0)?'':'<p class="mut">Keine offenen Kunden.</p>'}<p class="total">Gesamt offen ${eur(tot)}</p><div class="row noprint"><button class="b" onclick="print()">Übersicht drucken</button><button onclick="dl('uebersicht-'+today()+'.txt',S.customers.filter(c=>sum(c)!==0).map(billText).join('\n\n----------\n'),'text/plain')">Alle Abrechnungen als Textdatei</button></div>`}
+function vBackup(){return `<p>Alle Daten werden automatisch im Browser gespeichert. Das Backup sichert zusätzlich alles als Datei auf dem Laptop.</p><div class="row"><button class="g" onclick="exportJ()">Backup exportieren</button><button class="o" onclick="$('imp').click()">Backup importieren</button></div><input type="file" id="imp" accept=".json" style="display:none" onchange="importJ(this.files[0])"><h3>Live-Sicherung (bei jeder Änderung)</h3><p>Status: ${LB.state=='on'?`<b style="color:var(--green)">aktiv</b>, Ordner „${esc(LB.h.name)}“`:'<b style="color:var(--red)">nicht aktiv</b>'}</p><p class="mut">Jede Änderung wird sofort in eine Datei im gewählten Ordner geschrieben (navibar-live.json) plus eine Tagesdatei. Die letzten 7 Tage bleiben erhalten. Nur in Chrome oder Edge.</p><div class="row"><button class="b" onclick="lbSetup()">Sicherungsordner wählen</button><button onclick="lbRestore()">Aus Live-Sicherung wiederherstellen</button></div><p class="mut">Letztes manuelles Backup: ${S.lastBackup||'noch keines'}</p>`}
+
+/* ===== Kunde: Detail & Buchen ===== */
+function detail(){const c=S.customers.find(x=>x.id==cur);if(!c){cur=null;$('ov').innerHTML='';return}
+ const hh=document.querySelector('header').offsetHeight;document.documentElement.style.setProperty('--hh',hh+'px');
+ $('ov').innerHTML=`<div class="ov" style="top:${hh}px"><div class="box det">
+ <div class="dleftcol"><div class="dtop"><button onclick="cur=null;dq='';dcat='all';render()">← Zurück</button><button class="stor" onclick="undoLast('${c.id}')">Letzte stornieren</button><span style="flex:1"></span><button class="o" onclick="formEinzel('${c.id}')">+ Einzelposten</button><button class="g" onclick="formGut('${c.id}')">± Gegenbuchung</button><button onclick="formKunde('${c.id}')">Ändern</button></div>
+ <div class="dmain"><div class="cats"><button class="cat ${dcat=='all'?'on':''}" onclick="setCat('all')">Alle</button>${S.vouchers.length?`<button class="cat ${dcat=='bons'?'on':''}" style="--cc:#7a8a99" onclick="setCat('bons')">🎟 Bons</button>`:''}${catsSorted().map(k=>`<button class="cat ${dcat==k.id?'on':''}" style="--cc:${ccol(k.id)}" onclick="setCat('${k.id}')">${esc(k.name)}</button>`).join('')}<button class="cat misc ${dcat=='_misc'?'on':''}" style="--cc:#9aa0a6" onclick="setCat('_misc')">Sonstiges</button></div>
+ <div class="dleft"><input id="dq" placeholder="Getränk suchen" value="${esc(dq)}" oninput="dq=this.value;$('tiles').innerHTML=tilesHtml(S.customers.find(x=>x.id==cur))"><div id="tiles" class="tiles">${tilesHtml(c)}</div></div></div></div>
+ <div class="dright"><div class="dhead">#${c.no} ${esc(c.first)} ${esc(c.last)} <span class="tag ${c.role}">${c.role}</span>${c.nick?` <small class="mut">„${esc(c.nick)}“</small>`:''}</div><div class="escroll" style="flex:1 1 auto">${c.entries.map(e=>`<div class="pos"><div><b>${e.qty}× ${esc(e.label)}</b><small>${e.ts?fmt(e.ts):''}${e.cashier?' · '+esc(e.cashier):''}</small></div><span class="${e.price<0?'neg':''}">${eur(e.price*e.qty)}</span><div class="pb"><button onclick="chg('${c.id}','${e.id}',-1)">−</button><button onclick="chg('${c.id}','${e.id}',1)">+</button></div></div>`).join('')||'<p class="mut">Noch keine Buchungen.</p>'}</div>
+  <div class="dsum"><div class="srow"><span>Summe</span><span>${eur(sum(c))}${badge(c)}</span></div><button class="kass" onclick="paid('${c.id}')">✔ Bezahlt</button>
+  <div class="row sm"><button onclick="mailChoose('${c.id}')">Bezahl-E-Mail</button><button onclick="showQR('${c.id}')">Abrechnung / QR / PDF</button></div>
+  <div class="row sm"><button class="o" onclick="aktiv('${c.id}')">${c.active===false?'Aktivieren':'Deaktivieren'}</button><button class="r" onclick="delKunde('${c.id}')">Löschen</button></div></div></div></div></div>`}
+function book(cid,did){const c=S.customers.find(x=>x.id==cid),d=S.drinks.find(x=>x.id==did);const pp=pr(d,c);
+ toast('✔ '+d.name+' gebucht');c.entries.push({id:uid(),ts:Date.now(),cashier:cname(),did,label:`${d.name} ${d.amount} ${d.unit}`,price:pp,qty:1});c.paid=false;save();render()}
+function chg(cid,eid,n){const c=S.customers.find(x=>x.id==cid),e=c.entries.find(x=>x.id==eid);
+ const del=()=>{c.entries=c.entries.filter(x=>x!=e);save();render()};
+ if(n==0)return ask('Buchung „'+e.label+'“ entfernen?',del,'Entfernen','r');
+ if(e.qty+n<1)return ask('Posten „'+e.label+'“ wirklich entfernen?',del,'Entfernen','r');
+ e.qty+=n;save();render()}
+function paid(cid){const c=S.customers.find(x=>x.id==cid);if(!c.entries.length){toast('Keine Buchungen zum Abschließen','#d9822b');return}
+ const o=document.createElement('div');o.className='ov';o.style.zIndex=30;o.style.alignItems='center';
+ o.innerHTML=`<div class="box" style="max-width:680px;text-align:center"><p style="font-size:26px;line-height:1.35;margin:12px 0 8px">Rechnung über <b>${eur(sum(c))}</b> als bezahlt abschließen?</p><p class="mut" style="font-size:18px;margin:0 0 20px">Die Buchungen von #${c.no} werden gelöscht, der Kunde bleibt bestehen. Die Zahlung bleibt im Admin-Archiv.</p><div style="display:flex;flex-wrap:wrap;gap:12px"><button class="g" data-m="Bar" style="flex:1;min-height:88px;font-size:24px">💶 Bar</button><button class="g" data-m="Karte" style="flex:1;min-height:88px;font-size:24px">💳 Karte</button><button class="g" data-m="Überweisung" style="flex:1;min-height:88px;font-size:24px">🏦 Überweisung</button></div><div class="row" style="margin-top:14px"><button id="pno" style="min-height:72px;font-size:22px">Abbrechen</button></div></div>`;
+ document.body.appendChild(o);o.querySelectorAll('[data-m]').forEach(b=>b.onclick=()=>{o.remove();doPaid(cid,b.dataset.m)});o.querySelector('#pno').onclick=()=>o.remove()}
+function doPaid(cid,m){const c=S.customers.find(x=>x.id==cid);
+ S.archive.push({id:uid(),no:c.no,name:(c.first+' '+c.last).trim(),role:c.role,cashier:cname(),paidAt:Date.now(),method:m,entries:c.entries.map(e=>({...e}))});
+ c.lastBooked=Math.max(c.lastBooked||0,...c.entries.map(e=>e.ts||0));c.entries=[];c.paid=false;save();render()}
+function aktiv(id){const c=S.customers.find(x=>x.id==id);const off=c.active===false;c.active=off;if(off){c.created=Date.now();c.lastBooked=0}cur=null;save();render()}
+function delKunde(id){ask('Kunde mit allen Buchungen löschen?',()=>{S.customers=S.customers.filter(c=>c.id!=id);cur=null;save();render()},'Löschen','r')}
+
+/* ===== Formulare (Modal) ===== */
+function modal(title,html,ok,lbl){const o=document.createElement('div');o.className='ov';o.style.zIndex=20;
+ o.innerHTML=`<div class="box"><h2 style="margin-top:0">${title}</h2>${html}<div class="row"><button class="g" id="mok">${lbl||'Speichern'}</button><button id="mno">Abbrechen</button></div></div>`;document.body.appendChild(o);
+ $('mno').onclick=()=>o.remove();$('mok').onclick=()=>{if(ok(o)!==false)o.remove()};fixIn(o);const f=o.querySelector('input');f&&f.focus()}
+const v=(o,n)=>o.querySelector('[name='+n+']').value.trim();
+function formKunde(id){const c=S.customers.find(x=>x.id==id)||{first:'',last:'',role:'T'};
+ modal(id?'Kunde ändern':'Neuer Kunde',`<label>Kundennummer (frei wählbar)<input name="no" inputmode="numeric" value="${id?c.no:nextNo()}"></label><div class="row"><input name="f" placeholder="Vorname" value="${esc(c.first)}"><input name="l" placeholder="Nachname" value="${esc(c.last)}"></div><input name="s" placeholder="Spitzname (optional)" value="${esc(c.nick||'')}"><input name="m" placeholder="E-Mail (optional)" value="${esc(c.mail||'')}"><select name="r"><option value="T" ${c.role=='T'?'selected':''}>T – Teilnehmer</option><option value="A" ${c.role=='A'?'selected':''}>A – Ausbilder</option></select>`,o=>{
+ if(!v(o,'f')&&!v(o,'l'))return false;
+ const no=parseInt(v(o,'no'));if(!no||no<1){alert('Bitte eine gültige Nummer eingeben.');return false}
+ if(S.usedNos.includes(no)&&!(id&&c.no==no)){alert('Nummer '+no+' wurde schon vergeben (auch gelöschte Nummern werden nicht erneut vergeben). Der Admin kann gelöschte Nummern im Admin-Bereich freigeben.');return false}
+ if(id){Object.assign(c,{no,nick:v(o,'s'),mail:v(o,'m'),first:v(o,'f'),last:v(o,'l'),role:v(o,'r')})}else{const n={id:uid(),no,nick:v(o,'s'),mail:v(o,'m'),created:Date.now(),active:true,first:v(o,'f'),last:v(o,'l'),role:v(o,'r'),paid:false,entries:[]};S.customers.push(n);cur=n.id}
+ if(!S.usedNos.includes(no))S.usedNos.push(no);S.nextNo=Math.max(S.nextNo,no+1);save();render()})}
+function formGetr(id){const d=S.drinks.find(x=>x.id==id)||{name:'',type:'',amount:'',unit:'ml',price:''};
+ modal(id?'Getränk ändern':'Neues Getränk',`<input name="n" placeholder="Name (z. B. Pils)" value="${esc(d.name)}"><div class="row"><select name="c"><option value="">– keine Kategorie –</option>${catsSorted().map(k=>`<option value="${k.id}" ${d.cat==k.id?'selected':''}>${esc(k.name)}</option>`).join('')}</select></div><div class="row"><input name="a" inputmode="decimal" placeholder="Menge" value="${d.amount}"><select name="u"><option ${d.unit=='ml'?'selected':''}>ml</option><option ${d.unit=='Stück'?'selected':''}>Stück</option></select></div><div class="row"><label style="flex:1">Preis Teilnehmer (€)<input name="p" inputmode="decimal" value="${d.price===''?'':(d.price/100).toFixed(2).replace('.',',')}"></label><label style="flex:1">Preis Ausbilder (€)<input name="pa" inputmode="decimal" value="${d.price===''?'':((d.priceA!=null?d.priceA:d.price)/100).toFixed(2).replace('.',',')}"></label></div>`,o=>{
+ const p=cents(v(o,'p')),pa=v(o,'pa')===''?p:cents(v(o,'pa'));if(!v(o,'n')||isNaN(p)||isNaN(pa))return false;
+ const x={name:v(o,'n'),type:(S.cats.find(k=>k.id==v(o,'c'))||{name:''}).name,cat:v(o,'c'),amount:v(o,'a'),unit:v(o,'u'),price:p,priceA:pa};
+ if(id){if(d.price!=p||(d.priceA!=null?d.priceA:d.price)!=pa)x.priceSince=Date.now();Object.assign(d,x)}else S.drinks.push({id:uid(),...x});save();render()})}
+function delGetr(id){ask('Getränk löschen?\nBestehende Buchungen bleiben erhalten.',()=>{S.drinks=S.drinks.filter(d=>d.id!=id);save();render()},'Löschen','r')}
+function formGut(cid){modal('Manuelle Gegenbuchung',`<input name="t" placeholder="Text (z. B. Getränkegutschein)" value="Getränkegutschein"><input name="p" inputmode="decimal" placeholder="Betrag in € (z. B. 2,00)">`,o=>{
+ let p=cents(v(o,'p'));if(isNaN(p)||!p)return false;p=-Math.abs(p);const c=S.customers.find(x=>x.id==cid);
+ c.entries.push({id:uid(),ts:Date.now(),cashier:cname(),did:null,label:v(o,'t')||'Gutschrift',price:p,qty:1});c.paid=false;save();render()})}
+
+/* ===== Abrechnung, QR, Export ===== */
+function billText(c){return `NAVIBAR #${c.no} ${c.first} ${c.last} (${c.role})\n`+c.entries.map(e=>`${e.ts?fmt(e.ts)+' ':''}${e.qty}x ${e.label} ${eur(e.price*e.qty)}`).join('\n')+`\nSUMME ${eur(sum(c))}`}
+function showQR(cid){const c=S.customers.find(x=>x.id==cid),t=billText(c),lines=t.split('\n'),parts=[''];
+ lines.forEach(l=>{if(new TextEncoder().encode(parts[parts.length-1]+l).length>380)parts.push('');parts[parts.length-1]+=l+'\n'});
+ const o=document.createElement('div');o.className='ov';o.style.zIndex=20;
+ o.innerHTML=`<div class="box"><h2 style="margin-top:0">Abrechnung #${c.no}</h2>${parts.length>1?`<p class="mut">Die Abrechnung ist lang und auf ${parts.length} QR-Codes verteilt – bitte alle scannen.</p>`:'<p class="mut">Mit dem Handy scannen, der Text erscheint direkt.</p>'}<div id="qrs" class="row" style="justify-content:center"></div><pre>${esc(t)}</pre><div class="row"><button class="g" onclick="pdfBill('${c.id}')">PDF erstellen</button><button class="o" onclick="mailBill('${c.id}')">E-Mail senden</button><button onclick="dl('abrechnung-${c.no}.txt',\`${t.replace(/`/g,'')}\`,'text/plain')">Als Textdatei</button><button class="b" id="qx">Schließen</button></div></div>`;
+ document.body.appendChild(o);$('qx').onclick=()=>o.remove();
+ parts.forEach((p,i)=>{try{const k=QR.draw((parts.length>1?`(${i+1}/${parts.length})\n`:'')+p.trim());$('qrs').appendChild(k)}catch(e){$('qrs').append('QR zu groß – bitte Textdatei nutzen.')}})}
+function dl(name,text,type){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([text],{type:type+';charset=utf-8'}));a.download=name;a.click()}
+function exportJ(){S.lastBackup=today();save();dl('navibar-backup-'+today()+'.json',JSON.stringify(S,null,1),'application/json');render()}
+function importJ(f){if(!f)return;const r=new FileReader();r.onload=()=>{try{const d=JSON.parse(r.result);
+ if(!Array.isArray(d.drinks)||!Array.isArray(d.customers)||typeof d.nextNo!='number')throw 0;
+ return ask(`Backup laden?\n${d.customers.length} Kunden, ${d.drinks.length} Getränke.\nAktuelle Daten werden überschrieben!`,()=>{S=d;norm();save();cur=null;render()},'Backup laden','r')}catch(e){alert('Datei ist kein gültiges Navibar-Backup.')}};r.readAsText(f)}
+
+/* ===== Getränkebons ===== */
+function formBonStamm(id){const b=S.vouchers.find(x=>x.id==id)||{name:'',value:'',qty:1};
+ modal(id?'Getränkebon ändern':'Neuer Getränkebon',`<input name="n" placeholder="Name (z. B. Getränkebon 2 €)" value="${esc(b.name)}"><input name="p" inputmode="decimal" placeholder="Wert in € (z. B. 2,00)" value="${b.value===''?'':(b.value/100).toFixed(2).replace('.',',')}"><label>Stück (0 = beim Buchen nachfragen)<input name="q" inputmode="numeric" value="${b.qty==null?0:b.qty}"></label>`,o=>{
+ const p=Math.abs(cents(v(o,'p')));if(!v(o,'n')||!p)return false;
+ const q=Math.max(0,parseInt(v(o,'q'))||0);if(id){b.name=v(o,'n');b.value=p;b.qty=q}else S.vouchers.push({id:uid(),name:v(o,'n'),value:p,qty:q});save();render()})}
+function delBon(id){ask('Getränkebon löschen?',()=>{S.vouchers=S.vouchers.filter(b=>b.id!=id);save();render()},'Löschen','r')}
+function bonBook(cid,b,n){const c=S.customers.find(x=>x.id==cid);c.entries.push({id:uid(),ts:Date.now(),cashier:cname(),did:null,label:b.name,price:-b.value,qty:n});save();render();toast('✔ '+(n>1?n+'× ':'')+b.name+' abgezogen')}
+function formBon(cid,bid){const b=S.vouchers.find(x=>x.id==bid);
+ if(b.qty>0)return bonBook(cid,b,b.qty);
+ modal('🎟 '+esc(b.name)+' einlösen',`<label>Stückzahl<input name="n" inputmode="numeric" data-submit="1" value="1"></label>`,o=>{const n=parseInt(v(o,'n'));if(!n||n<1)return false;bonBook(cid,b,n)},'Abziehen')}
+
+/* ===== PDF (eigener Mini-Generator, offline) & E-Mail ===== */
+function pdfBlob(lines){const per=46,pg=[];for(let i=0;i<lines.length;i+=per)pg.push(lines.slice(i,i+per));
+ const en=s=>s.replace(/\u20ac/g,'\x80').replace(/[^\x00-\xff]/g,'?').replace(/[\\()]/g,'\\$&');
+ let out='%PDF-1.4\n';const off=[];const add=(id,b)=>{off[id]=out.length;out+=id+' 0 obj\n'+b+'\nendobj\n'};
+ add(1,'<</Type/Catalog/Pages 2 0 R>>');add(2,`<</Type/Pages/Kids[${pg.map((_,i)=>(4+2*i)+' 0 R').join(' ')}]/Count ${pg.length}>>`);
+ add(3,'<</Type/Font/Subtype/Type1/BaseFont/Helvetica/Encoding/WinAnsiEncoding>>');
+ pg.forEach((p,i)=>{const s='BT /F1 12 Tf 50 790 Td 17 TL\n'+p.map(l=>'('+en(l)+') Tj T*').join('\n')+'\nET';
+  add(4+2*i,`<</Type/Page/Parent 2 0 R/MediaBox[0 0 595 842]/Resources<</Font<</F1 3 0 R>>>>/Contents ${5+2*i} 0 R>>`);add(5+2*i,`<</Length ${s.length}>>\nstream\n${s}\nendstream`)});
+ const x=out.length,N=4+pg.length*2;out+=`xref\n0 ${N}\n0000000000 65535 f \n`+off.slice(1).map(f=>String(f).padStart(10,'0')+' 00000 n \n').join('')+`trailer\n<</Size ${N}/Root 1 0 R>>\nstartxref\n${x}\n%%EOF`;
+ return new Blob([Uint8Array.from(out,ch=>ch.charCodeAt(0))],{type:'application/pdf'})}
+function pdfBill(cid){const c=S.customers.find(x=>x.id==cid);
+ const a=document.createElement('a');a.href=URL.createObjectURL(pdfBlob(['Navibar - Abrechnung',today(),'',...billText(c).split('\n')]));a.download=`abrechnung-${c.no}-${today()}.pdf`;a.click()}
+function mailBill(cid){const c=S.customers.find(x=>x.id==cid);
+ location.href='mailto:?subject='+encodeURIComponent('Navibar Abrechnung #'+c.no)+'&body='+encodeURIComponent(billText(c))}
+
+/* ===== Hilfen: Toast, Label, Nummer, Einzelposten, Rückgängig ===== */
+function toast(t,col,ms){const d=document.createElement('div');d.className='toast';d.textContent=t;if(col)d.style.background=col;document.body.appendChild(d);setTimeout(()=>d.remove(),ms||1500)}
+const badge=c=>{const s=sum(c);return s<0?'<span class="bdg gr">Gutschrift</span>':s>0?'<span class="bdg rd">noch offen</span>':''};
+function openNo(){const n=parseInt($('nn')&&$('nn').value);if(!n)return;const c=S.customers.find(x=>x.no==n);
+ if(!c){alert('Kundennummer '+n+' nicht gefunden.');return}
+ const go=()=>{cur=c.id;render()};
+ if(c.active===false)return ask(`Kunde #${n} ${c.first} ${c.last} ist deaktiviert.\nAktivieren und öffnen?`,()=>{c.active=true;c.created=Date.now();c.lastBooked=0;save();go()},'Aktivieren');
+ go()}
+function undoLast(cid){const c=S.customers.find(x=>x.id==cid),e=c.entries.pop();if(!e){toast('Keine Buchung vorhanden','#f08a1c');return}save();render();toast('↩ Rückgängig: '+e.label,'#f08a1c',2000)}
+function formEinzel(cid){modal('Einzelposten',`<input name="n" placeholder="Bezeichnung"><div class="row"><input name="p" inputmode="decimal" placeholder="Preis in €"><input name="q" inputmode="numeric" value="1" placeholder="Stück"></div>`,o=>{
+ const p=Math.abs(cents(v(o,'p'))),q=parseInt(v(o,'q'));if(!v(o,'n')||!p||!q)return false;const c=S.customers.find(x=>x.id==cid);
+ c.entries.push({id:uid(),ts:Date.now(),cashier:cname(),did:null,label:v(o,'n'),price:p,qty:q});toast('✔ '+v(o,'n')+' gebucht');save();render()})}
+
+/* ===== E-Mail an Kunden (Vorlage mit Platzhaltern) ===== */
+const fillTpl=(s,c)=>s.replace(/\{(Name|Nummer|Datum|Summe|Posten)\}/g,(_,k)=>({Name:(c.first+' '+c.last).trim(),Nummer:c.no,Datum:new Date().toLocaleDateString('de-DE'),Summe:eur(sum(c)),Posten:c.entries.map(e=>`${e.ts?fmt(e.ts)+' ':''}${e.qty}x ${e.label} ${eur(e.price*e.qty)}`).join('\n')})[k]);
+function mailPay(cid){const c=S.customers.find(x=>x.id==cid);
+ if(!c.mail){alert('Für diesen Kunden ist keine E-Mail-Adresse hinterlegt. Bitte unter „Ändern“ eintragen.');return}
+ location.href='mailto:'+c.mail.trim()+'?subject='+encodeURIComponent(fillTpl(S.mailTpl.subj,c))+'&body='+encodeURIComponent(fillTpl(S.mailTpl.body,c))}
+const textToHtml=t=>'<p>'+esc(t||'').replace(/\n\n/g,'</p><p>').replace(/\n/g,'<br>')+'</p>';
+const htmlToText=s=>s.replace(/<br\s*\/?>/gi,'\n').replace(/<\/(p|div|li|h\d|tr)>/gi,'\n\n').replace(/<[^>]+>/g,'').replace(/&nbsp;/g,' ').replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&amp;/g,'&').replace(/\n{3,}/g,'\n\n').trim();
+const tplHtml=()=>S.mailTpl.html||textToHtml(S.mailTpl.body);
+function formMailTpl(){const t=S.mailTpl,ex=(c,a)=>`onpointerdown="event.preventDefault();document.execCommand('${c}',false,${a?`'${a}'`:'null'})"`;
+ modal('E-Mail-Vorlage',`<label>Betreff<input name="s" value="${esc(t.subj)}"></label>
+ <div class="mtb"><button type="button" ${ex('bold')}><b>F</b></button><button type="button" ${ex('italic')}><i>K</i></button><button type="button" ${ex('underline')}><u>U</u></button><button type="button" ${ex('justifyLeft')}>⬅</button><button type="button" ${ex('justifyCenter')}>↔</button><button type="button" ${ex('insertUnorderedList')}>• Liste</button><button type="button" ${ex('fontSize','2')}>A−</button><button type="button" ${ex('fontSize','4')}>A</button><button type="button" ${ex('fontSize','6')}>A+</button>${['#0b2a4a','#1b5f8c','#c0392b','#238a76','#000000'].map(col=>`<button type="button" style="background:${col};min-width:50px" ${ex('foreColor',col)}></button>`).join('')}<button type="button" onclick="mailImg()">🖼 Bild</button></div>
+ <div id="med" contenteditable="true" style="min-height:240px;max-height:40vh;overflow:auto;border:2px solid var(--line);border-radius:10px;padding:12px;background:#fff;font-size:18px">${tplHtml()}</div>
+ <div class="mtb"><span class="mut">Platzhalter:</span>${['Name','Nummer','Datum','Summe','Posten'].map(k=>`<button type="button" onpointerdown="event.preventDefault();document.execCommand('insertText',false,'{${k}}')">{${k}}</button>`).join('')}</div>`,o=>{
+ const hh=o.querySelector('#med').innerHTML;S.mailTpl={subj:o.querySelector('[name=s]').value,html:hh,body:htmlToText(hh)};save();render()})}
+function mailImg(){const i=document.createElement('input');i.type='file';i.accept='image/*';i.onchange=()=>{const f=i.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{const im=new Image();im.onload=()=>{const m=Math.min(1,560/im.width),c=document.createElement('canvas');c.width=Math.round(im.width*m);c.height=Math.round(im.height*m);c.getContext('2d').drawImage(im,0,0,c.width,c.height);
+ const u=c.toDataURL(/png|gif|svg/.test(f.type)?'image/png':'image/jpeg',.85);$('med').insertAdjacentHTML('beforeend','<p style="text-align:center"><img src="'+u+'"></p>')};im.src=r.result};r.readAsDataURL(f)};i.click()}
+const postenHtml=c=>`<table style="border-collapse:collapse;width:100%">${c.entries.map(e=>`<tr><td style="padding:3px 8px;border-bottom:1px solid #ddd">${e.qty}× ${esc(e.label)}${e.ts?` <small style="color:#777">(${fmt(e.ts)})</small>`:''}</td><td style="padding:3px 8px;border-bottom:1px solid #ddd;text-align:right">${eur(e.price*e.qty)}</td></tr>`).join('')}</table>`;
+const fillHtml=(s,c)=>s.replace(/\{(Name|Nummer|Datum|Summe|Posten)\}/g,(_,k)=>k=='Posten'?postenHtml(c):esc(String({Name:(c.first+' '+c.last).trim(),Nummer:c.no,Datum:new Date().toLocaleDateString('de-DE'),Summe:eur(sum(c))}[k])));
+const b64=s=>btoa(unescape(encodeURIComponent(s))),wrap76=s=>s.replace(/(.{76})/g,'$1\r\n');
+function buildEml(c){const subj=fillTpl(S.mailTpl.subj,c),parts=[];let n=0;
+ let html=fillHtml(tplHtml(),c).replace(/src="data:(image\/[a-z+.-]+);base64,([^"]+)"/g,(m,t,d)=>{const id='img'+(++n)+'@navibar';parts.push({id,t,d});return 'src="cid:'+id+'"'});
+ const B='=_navibar_'+Date.now();
+ let e='X-Unsent: 1\r\nTo: '+(c.mail||'')+'\r\nSubject: =?UTF-8?B?'+b64(subj)+'?=\r\nMIME-Version: 1.0\r\nContent-Type: multipart/related; boundary="'+B+'"; type="text/html"\r\n\r\n';
+ e+='--'+B+'\r\nContent-Type: text/html; charset=UTF-8\r\nContent-Transfer-Encoding: base64\r\n\r\n'+wrap76(b64('<html><body style="font-family:Arial,sans-serif;font-size:15px">'+html+'</body></html>'))+'\r\n';
+ parts.forEach(p=>e+='--'+B+'\r\nContent-Type: '+p.t+'\r\nContent-Transfer-Encoding: base64\r\nContent-ID: <'+p.id+'>\r\nContent-Disposition: inline\r\n\r\n'+wrap76(p.d)+'\r\n');
+ return e+'--'+B+'--\r\n'}
+function mailEml(cid){const c=S.customers.find(x=>x.id==cid);dl('Bezahl-E-Mail-'+c.no+'.eml',buildEml(c),'message/rfc822');toast('E-Mail-Datei gespeichert – öffnen, dann öffnet sich der Entwurf',null,3500)}
+function mailChoose(cid){const o=document.createElement('div');o.className='ov';o.style.zIndex=30;o.style.alignItems='center';
+ o.innerHTML=`<div class="box" style="max-width:640px;text-align:center"><p style="font-size:26px;margin:12px 0 20px">Bezahl-E-Mail senden</p><div style="display:flex;flex-direction:column;gap:14px"><button class="g" id="m1" style="min-height:90px;font-size:22px">Schön formatiert<br><small>E-Mail-Datei (.eml) öffnen</small></button><button class="b" id="m2" style="min-height:90px;font-size:22px">Einfacher Text<br><small>Mailprogramm direkt öffnen</small></button><button id="m3" style="min-height:72px;font-size:22px">Abbrechen</button></div></div>`;
+ document.body.appendChild(o);o.querySelector('#m1').onclick=()=>{o.remove();mailEml(cid)};o.querySelector('#m2').onclick=()=>{o.remove();mailPay(cid)};o.querySelector('#m3').onclick=()=>o.remove()}
+
+/* ===== Automatische Deaktivierung: 2 Monate ohne Buchung (Kunden mit offenen Posten bleiben aktiv) ===== */
+function autoDeact(){const lim=new Date();lim.setMonth(lim.getMonth()-2);let n=0;
+ S.customers.forEach(c=>{if(c.active===false||c.entries.length)return;if(Math.max(c.created||0,c.lastBooked||0)<lim.getTime()){c.active=false;n++}});
+ if(n){save();render();toast(n+' Kunde(n) wegen 2 Monaten ohne Buchung deaktiviert','#d6453d',4000)}}
+
+/* ===== Bildschirmtastatur: öffnet sich bei jedem Eingabefeld, System-Tastatur bleibt aus ===== */
+const KB={t:null,shift:false},kbEl=document.createElement('div');kbEl.id='kb';document.body.appendChild(kbEl);
+const INP='input:not([type=file]):not([type=color]),textarea,[contenteditable=true]';
+function fixIn(r){r.querySelectorAll(INP).forEach(i=>{const m=i.getAttribute('inputmode');if(m&&m!='none')i.dataset.kb='num';i.setAttribute('inputmode','none')})}
+new MutationObserver(()=>fixIn(document)).observe(document.body,{childList:true,subtree:true});fixIn(document);
+const eligible=t=>t.dataset.kb!='num'&&t.id!='sq'&&t.id!='dq'&&t.name!='m'&&t.type!='password';
+function showKb(){const t=KB.t,num=t.dataset.kb=='num',was=kbEl.style.display=='block';
+ const rows=num?['789','456','123',',0⌫']:['1234567890ß','qwertzuiopü','asdfghjklöä','⇧yxcvbnm⌫'];
+ const key=(k,l)=>`<button data-k="${k}">${l||(KB.shift&&!num&&k.length==1?k.toUpperCase():k)}</button>`;
+ kbEl.innerHTML=rows.map(r=>`<div class="kr">${[...r].map(k=>key(k)).join('')}</div>`).join('')+(num?'':`<div class="kr">${key('@')}${key('.')}${key('-')}${key('_')}${key(' ','Leertaste')}${key(',')}${(t.tagName=='TEXTAREA'||t.isContentEditable)?key('\n','↵'):''}</div>`)+`<div class="kr">${key('DONE','Fertig')}</div>`;
+ kbEl.className=num?'num':'';kbEl.style.display='block';document.documentElement.style.setProperty('--kbh',kbEl.offsetHeight+'px');document.body.classList.add('kbopen');if(!was)setTimeout(()=>t.scrollIntoView({block:'center',behavior:'smooth'}),60)}
+function hideKb(){kbEl.style.display='none';document.body.classList.remove('kbopen');KB.t=null}
+document.addEventListener('focusin',e=>{const t=e.target;if(!t.matches||!t.matches(INP))return;fixIn(document);KB.t=t;const L=(t.value||'').length;[0,60].forEach(ms=>setTimeout(()=>{try{t.setSelectionRange(L,L)}catch(e){}},ms));
+ KB.shift=(t.value!==undefined?t.value:t.textContent.trim())===''&&eligible(t);showKb()});
+document.addEventListener('focusout',()=>setTimeout(()=>{if(!document.activeElement||!document.activeElement.matches(INP))hideKb()},200));
+kbEl.addEventListener('pointerdown',e=>{const b=e.target.closest('button');if(!b)return;e.preventDefault();kk(b.dataset.k)});
+function kk(k){const t=KB.t;if(!t)return;
+ if(k=='⇧'){KB.shift=!KB.shift;showKb();return}
+ if(k=='DONE'){const id=t.id,sub=t.dataset.submit;t.blur();hideKb();if(id=='nn')openNo();if(sub&&$('mok'))$('mok').click();return}
+ if(t.isContentEditable){if(k=='⌫')document.execCommand('delete');else if(k=='\n')document.execCommand('insertParagraph');else{document.execCommand('insertText',false,KB.shift&&k.length==1?k.toUpperCase():k);if(KB.shift){KB.shift=false;showKb()}}return}
+ if(k=='⌫'){const s=t.selectionStart,e=t.selectionEnd;t.setRangeText('',s==e&&s>0?s-1:s,e,'end')}
+ else{t.setRangeText(KB.shift&&k.length==1?k.toUpperCase():k,t.selectionStart,t.selectionEnd,'end');if(KB.shift){KB.shift=false;showKb()}}
+ if(t.value===''&&eligible(t)&&!KB.shift){KB.shift=true;showKb()}t.dispatchEvent(new Event('input',{bubbles:true}))}
+/* ===== Kassierer, Startbildschirm, Admin (PIN), Inaktivität ===== */
+let cashier=null,adminOn=false,idle=Date.now();
+const cname=()=>(S.cashiers.find(k=>k.id==cashier)||{}).name||'';
+function render(){const k=S.cashiers.find(x=>x.id==cashier);if(cashier&&!k)cashier=null;
+ if(adminOn)return renderAdmin();if(!k)return renderStart();
+ renderMain();$('who').innerHTML=`Kassierer: <b>${esc(k.name)}</b> <button onclick="logout()">Wechseln</button>`}
+function logout(){cashier=null;adminOn=false;cur=null;dq='';dcat='all';render();tick()}
+function pick(id){cashier=id;tab='kunden';q='';idle=Date.now();render();tick();toast('Angemeldet: '+cname(),null,1200)}
+function renderStart(){$('nav').innerHTML='';$('who').innerHTML='';$('ov').innerHTML='';cur=null;
+ $('main').innerHTML=`<div style="min-height:calc(100vh - 170px);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:30px"><h2 style="margin:0;color:var(--navy);font-size:38px">⚓ Wer kassiert?</h2><div style="display:flex;flex-wrap:wrap;gap:22px;justify-content:center;max-width:1100px">${S.cashiers.map(k=>`<button class="card b" style="width:310px;min-height:180px;font-size:34px;text-align:center" onclick="pick('${k.id}')">${esc(k.name)}</button>`).join('')||'<p class="mut">Noch kein Kassierer angelegt. Bitte im Admin-Bereich anlegen.</p>'}</div><button class="o" style="min-height:80px;font-size:26px;padding:12px 48px" onclick="adminLogin()">⚙ Admin</button></div>`}
+function adminLogin(){modal('Admin-Anmeldung',`<input name="p" type="password" inputmode="numeric" maxlength="4" data-submit="1" placeholder="4-stellige PIN">`,o=>{
+ if(v(o,'p')!==S.pin){alert('Falsche PIN.');return false}adminOn=true;idle=Date.now();render();tick()},'Anmelden')}
+function renderAdmin(){$('who').innerHTML='<b>Admin</b> <button onclick="logout()">Beenden</button>';$('ov').innerHTML='';
+ $('nav').innerHTML=[['stamm','Kassierer & Kategorien'],['getraenke','Getränke & Bons'],['zahlungen','Zahlungen'],['auswertung','Auswertung']].map(([k,t])=>`<button class="${atab==k?'on':''}" onclick="atab='${k}';render()">${t}</button>`).join('');
+ $('main').innerHTML=atab=='getraenke'?vGetr():atab=='zahlungen'?vZahl():atab=='auswertung'?vAus():adminStamm()}
+function formKassierer(id){const k=S.cashiers.find(x=>x.id==id)||{name:''};
+ modal(id?'Kassierer umbenennen':'Neuer Kassierer',`<input name="n" placeholder="Name" value="${esc(k.name)}">`,o=>{if(!v(o,'n'))return false;if(id)k.name=v(o,'n');else S.cashiers.push({id:uid(),name:v(o,'n')});save();render()})}
+function delKassierer(id){const k=S.cashiers.find(x=>x.id==id);ask(`Kassierer „${k.name}“ löschen?\nBereits gebuchte Posten behalten den Namen.`,()=>{S.cashiers=S.cashiers.filter(x=>x.id!=id);save();render()},'Löschen','r')}
+function formPin(){modal('Admin-PIN ändern',`<input name="a" type="password" inputmode="numeric" placeholder="Neue PIN (4 Ziffern)"><input name="b" type="password" inputmode="numeric" placeholder="PIN wiederholen">`,o=>{
+ const a=v(o,'a');if(!/^\d{4}$/.test(a)){alert('Die PIN muss genau 4 Ziffern haben.');return false}
+ if(a!==v(o,'b')){alert('Die beiden PINs stimmen nicht überein.');return false}S.pin=a;save();toast('PIN geändert')})}
+['pointerdown','keydown'].forEach(ev=>document.addEventListener(ev,()=>idle=Date.now(),true));
+function tick(){const on=cashier||adminOn,left=300000-(Date.now()-idle);
+ if(on&&left<=0){document.querySelectorAll('.ov').forEach(o=>o.remove());hideKb();logout();return}
+ $('tm').innerHTML=on?`<span style="color:${left<60000?'#ff8a80':'#cfd8dc'}">⏱ Abmeldung in <b>${Math.max(1,Math.ceil(left/60000))}</b> Min.</span>`:''}
+setInterval(tick,2000);
+/* ===== Große Bestätigungsdialoge ===== */
+function ask(msg,cb,lbl,cls){const o=document.createElement('div');o.className='ov';o.style.zIndex=30;o.style.alignItems='center';
+ o.innerHTML=`<div class="box" style="max-width:620px;text-align:center"><p style="font-size:26px;line-height:1.35;margin:12px 0 24px;white-space:pre-line">${esc(msg)}</p><div class="row"><button class="${cls||'g'}" id="yes" style="min-height:76px;font-size:24px">${lbl||'Ja'}</button><button id="no" style="min-height:76px;font-size:24px">Abbrechen</button></div></div>`;
+ document.body.appendChild(o);o.querySelector('#yes').onclick=()=>{o.remove();cb()};o.querySelector('#no').onclick=()=>o.remove()}
+
+/* ===== Auswertung: Monatsumsatz als Diagramm (Archiv + offene Buchungen, Gutscheine abgezogen) ===== */
+let ausY=null;const PAL=['#1d6fd1','#f08a1c','#1f9d63','#9b59b6','#d6453d','#16a3b8'],MON=['Jan','Feb','Mär','Apr','Mai','Jun','Jul','Aug','Sep','Okt','Nov','Dez'];
+function toggY(y){if(ausY.includes(y)){if(ausY.length>1)ausY=ausY.filter(x=>x!=y)}else ausY.push(y);render()}
+function vAus(){const rows=[];if(ausMode=='bezahlt')S.archive.forEach(a=>a.entries.forEach(e=>rows.push({ts:a.paidAt,price:e.price,qty:e.qty})));else{S.archive.forEach(a=>a.entries.forEach(e=>rows.push(e)));S.customers.forEach(c=>c.entries.forEach(e=>rows.push(e)))}
+ const by={};rows.forEach(e=>{if(!e.ts)return;const d=new Date(e.ts),y=d.getFullYear();(by[y]=by[y]||Array(12).fill(0))[d.getMonth()]+=e.price*e.qty});
+ const Y=new Date().getFullYear(),years=[...new Set([Y,Y-1,...Object.keys(by).map(Number)])].sort((a,b)=>b-a);
+ if(!ausY)ausY=[Y,Y-1];const sel=years.filter(y=>ausY.includes(y)).sort((a,b)=>a-b),col=y=>PAL[(Y-y+PAL.length*10)%PAL.length],val=(y,m)=>((by[y]||[])[m]||0)/100;
+ const all=sel.flatMap(y=>MON.map((_,m)=>val(y,m))),mx=Math.max(1,...all),mn=Math.min(0,...all),raw=(mx-mn)/4,mag=Math.pow(10,Math.floor(Math.log10(raw))),step=[1,2,5,10].map(m=>m*mag).find(s=>s>=raw);
+ const top=Math.ceil(mx/step)*step,bot=Math.floor(mn/step)*step,L=70,T=30,PW=915,PH=290,yy=v=>T+(top-v)/(top-bot)*PH,gw=PW/12,bw=Math.min(36,(gw-10)/sel.length);
+ let g='';for(let t=bot;t<=top+1e-9;t+=step)g+=`<line x1="${L}" x2="${L+PW}" y1="${yy(t)}" y2="${yy(t)}" stroke="#e3eaf0"/><text x="${L-8}" y="${yy(t)+4}" text-anchor="end" font-size="12" fill="#6b7f90">${t.toLocaleString('de-DE')} €</text>`;
+ MON.forEach((n,m)=>{g+=`<text x="${L+m*gw+gw/2}" y="${T+PH+22}" text-anchor="middle" font-size="13" fill="#16324a">${n}</text>`;
+  sel.forEach((y,k)=>{const v=val(y,m),x=L+m*gw+(gw-bw*sel.length)/2+k*bw,y0=yy(0),y1=yy(v);
+   g+=`<rect x="${x}" y="${Math.min(y0,y1)}" width="${bw-2}" height="${Math.max(1,Math.abs(y1-y0))}" fill="${col(y)}" rx="3"/>`;
+   if(v)g+=`<text transform="rotate(-90 ${x+bw/2} ${Math.min(y0,y1)-5})" x="${x+bw/2}" y="${Math.min(y0,y1)-5}" font-size="11" fill="#16324a">${Math.round(v).toLocaleString('de-DE')} €</text>`})});
+ g+=`<line x1="${L}" x2="${L+PW}" y1="${yy(0)}" y2="${yy(0)}" stroke="#16324a"/>`;
+ return `<div class="row noprint"><button class="${ausMode=='gebucht'?'on':''}" onclick="ausMode='gebucht';render()">Gebucht (nach Buchungsdatum)</button><button class="${ausMode=='bezahlt'?'on':''}" onclick="ausMode='bezahlt';render()">Bezahlt (nach Zahldatum)</button></div>
+ <div class="row noprint"><span class="mut" style="flex:0 0 auto">Jahre:</span>${years.map(y=>`<button style="${ausY.includes(y)?`background:${col(y)};border-color:${col(y)};color:#fff`:`border-color:${col(y)}`}" onclick="toggY(${y})">${y}</button>`).join('')}</div>
+ <div class="card"><svg viewBox="0 0 1000 360" style="width:100%;height:auto">${g}</svg></div>
+ <p>${sel.slice().reverse().map(y=>`<b style="color:${col(y)}">${y}</b>: ${eur((by[y]||[]).reduce((a,b)=>a+b,0))}`).join(' &nbsp;·&nbsp; ')}</p>
+ <p class="mut">${ausMode=='gebucht'?'Umsatz = alle Buchungen nach Buchungsdatum (auch noch offene), Gutscheine abgezogen.':'Umsatz = nur bezahlte Rechnungen nach Zahldatum, Gutscheine abgezogen.'} Gelöschte Zahlungen zählen nicht mit. Rechnungen, die vor dem Archiv als bezahlt gelöscht wurden, fehlen.</p>`}
+
+/* ===== Kachel-Ansicht (Gastronovi-Stil): Getränke als Kacheln mit Farbstreifen je Art ===== */
+let dq='',dcat='all',atab='stamm';const PALT=['#1b5f8c','#2e8b9a','#c9a227','#b5533c','#5b7c99','#7a9e7e','#8c6bb1'];
+const catName=d=>(S.cats.find(k=>k.id==d.cat)||{}).name||'';
+const catsSorted=()=>S.cats.slice().sort((a,b)=>a.name.localeCompare(b.name,'de'));
+const ccol=id=>{const i=S.cats.findIndex(k=>k.id==id);return i<0?'#9aa0a6':(S.cats[i].color||PALT[i%PALT.length])};
+const txtCol=c=>{const n=parseInt(c.slice(1),16);return(0.299*(n>>16)+0.587*((n>>8)&255)+0.114*(n&255))>150?'#0b2a4a':'#fff'};
+const KCOL=['#1b5f8c','#2e8b9a','#238a76','#7a9e7e','#c9a227','#d9822b','#b5533c','#c0392b','#8c6bb1','#5b7c99','#0b2a4a','#6d6d6d'];
+function setCat(id){dcat=id;detail()}
+function tilesHtml(c){const t=dq.toLowerCase(),srt=(a,b)=>a.name.localeCompare(b.name,'de');
+ if(dcat=='_misc')return `<button class="tile" style="--tc:#9aa0a6" onclick="formDiv('${c.id}')"><b>Div. Getränke</b><span>Summe eingeben</span><i>… €</i></button>`;
+ const dr=dcat=='bons'?'':S.drinks.filter(d=>(dcat=='all'||d.cat==dcat)&&(d.name+' '+catName(d)).toLowerCase().includes(t)).sort(srt).map(d=>`<button class="tile" style="--tc:${ccol(d.cat)};color:${txtCol(ccol(d.cat))}" onclick="book('${c.id}','${d.id}')"><b>${esc(d.name)}</b><span>${d.amount} ${d.unit}</span><i>${eur(pr(d,c))}</i></button>`).join('');
+ const bo=(dcat=='bons')?S.vouchers.filter(b=>b.name.toLowerCase().includes(t)).sort(srt).map(b=>`<button class="tile bon" onclick="formBon('${c.id}','${b.id}')"><b>🎟 ${esc(b.name)}</b><span>${b.qty>0?b.qty+' Stück':'Stückzahl abfragen'}</span><i>−${eur(b.value)}</i></button>`).join(''):'';
+ return (dr+bo)||'<p class="mut">Nichts gefunden. Getränke und Kategorien legt der Admin an.</p>'}
+function formDiv(cid){modal('Div. Getränke – Summe',`<input name="p" inputmode="decimal" data-submit="1" placeholder="Summe in € (z. B. 7,50)">`,o=>{
+ const p=Math.abs(cents(v(o,'p')));if(!p)return false;const c=S.customers.find(x=>x.id==cid);
+ c.entries.push({id:uid(),ts:Date.now(),cashier:cname(),did:null,label:'Div. Getränke',price:p,qty:1});toast('✔ Div. Getränke '+eur(p)+' gebucht');save();render()},'Buchen')}
+const lostNos=()=>S.usedNos.filter(n=>!S.customers.some(c=>c.no==n)).sort((a,b)=>a-b);
+function freeNo(n){ask(n?`Nummer #${n} freigeben?\nSie kann dann wieder vergeben werden.`:`Alle ${lostNos().length} gesperrten Nummern freigeben?`,()=>{S.usedNos=n?S.usedNos.filter(x=>x!=n):S.usedNos.filter(x=>S.customers.some(c=>c.no==x));save();render()},'Freigeben')}
+function pickKatColor(id){const k=S.cats.find(x=>x.id==id),o=document.createElement('div');o.className='ov';o.style.zIndex=30;o.style.alignItems='center';
+ const set=c=>{k.color=c;save();o.remove();render()};
+ o.innerHTML=`<div class="box" style="max-width:640px;text-align:center"><h2 style="margin-top:0">Farbe für „${esc(k.name)}“</h2><div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px">${KCOL.map(c=>`<button data-c="${c}" style="background:${c};min-height:84px;border:5px solid ${ccol(id)==c?'#000':'transparent'}"></button>`).join('')}</div><div class="row" style="margin-top:16px"><label>Eigene Farbe<input type="color" id="kcc" value="${ccol(id)}" style="padding:4px"></label><button id="kok" class="g">Übernehmen</button></div><div class="row"><button id="kno">Abbrechen</button></div></div>`;
+ document.body.appendChild(o);o.querySelectorAll('[data-c]').forEach(b=>b.onclick=()=>set(b.dataset.c));o.querySelector('#kok').onclick=()=>set(o.querySelector('#kcc').value);o.querySelector('#kno').onclick=()=>o.remove()}
+function adminStamm(){return `<h3>Kassierer</h3><div class="row"><button class="b" onclick="formKassierer()">+ Kassierer</button></div><table>${S.cashiers.map(k=>`<tr><td>${esc(k.name)}</td><td class="n"><button onclick="formKassierer('${k.id}')">Umbenennen</button> <button class="r" onclick="delKassierer('${k.id}')">✕</button></td></tr>`).join('')||'<tr><td class="mut">Noch keine Kassierer.</td></tr>'}</table>
+ <h3>Getränkekategorien</h3><p class="mut">Auf das Farbfeld tippen, um die Kachelfarbe der Kategorie festzulegen.</p><div class="row"><button class="b" onclick="formKat()">+ Kategorie</button></div><table>${catsSorted().map(k=>`<tr><td><button style="background:${ccol(k.id)};min-width:60px;border:3px solid #fff;box-shadow:0 0 0 2px var(--line);vertical-align:middle" onclick="pickKatColor('${k.id}')" title="Farbe ändern"></button> ${esc(k.name)} <small class="mut">(${S.drinks.filter(d=>d.cat==k.id).length} Getränke)</small></td><td class="n"><button onclick="formKat('${k.id}')">Umbenennen</button> <button class="r" onclick="delKat('${k.id}')">✕</button></td></tr>`).join('')||'<tr><td class="mut">Noch keine Kategorien.</td></tr>'}<tr><td><span class="tag" style="background:#9aa0a6">&nbsp;</span> Sonstiges <small class="mut">(fest, immer ganz unten, enthält „Div. Getränke“)</small></td><td></td></tr></table>
+ <h3>Gelöschte Kundennummern</h3>${(()=>{const f=lostNos();return f.length?`<p class="mut">Diese Nummern sind gesperrt, weil der Kunde gelöscht wurde. Zum Neuvergeben freigeben:</p><div class="row">${f.map(n=>`<button onclick="freeNo(${n})">#${n} freigeben</button>`).join('')}<button class="r" onclick="freeNo(0)">Alle freigeben</button></div>`:'<p class="mut">Keine gesperrten Nummern.</p>'})()}
+ <h3>Speicherplatz</h3>${memBar()}
+ <h3>Sicherheit</h3><div class="row"><button onclick="formPin()">Admin-PIN ändern</button></div>`}
+function formKat(id){const k=S.cats.find(x=>x.id==id)||{name:''};
+ modal(id?'Kategorie umbenennen':'Neue Kategorie',`<input name="n" placeholder="Name (z. B. Bier)" value="${esc(k.name)}">`,o=>{const n=v(o,'n');if(!n)return false;
+  if(id){k.name=n;S.drinks.forEach(d=>{if(d.cat==id)d.type=n})}else S.cats.push({id:uid(),name:n});save();render()})}
+function delKat(id){const k=S.cats.find(x=>x.id==id);
+ ask(`Kategorie „${k.name}“ löschen?\nDie Getränke bleiben erhalten, haben dann aber keine Kategorie.`,()=>{S.cats=S.cats.filter(x=>x.id!=id);S.drinks.forEach(d=>{if(d.cat==id){d.cat='';d.type=''}});if(dcat==id)dcat='all';save();render()},'Löschen','r')}
+
+/* ===== Live-Sicherung: jede Änderung wird sofort in eine Datei auf dem PC geschrieben (Chrome/Edge) ===== */
+const LB={h:null,state:'off',last:null,t:null,busy:false,again:false,rot:''};
+const idb=()=>new Promise((res,rej)=>{const r=indexedDB.open('navibar-kasse-db',1);r.onupgradeneeded=()=>r.result.createObjectStore('kv');r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error)});
+const idbGet=async k=>{const d=await idb();return new Promise(res=>{const q=d.transaction('kv').objectStore('kv').get(k);q.onsuccess=()=>res(q.result);q.onerror=()=>res(null)})};
+const idbSet=async(k,v)=>{const d=await idb();return new Promise(res=>{const t=d.transaction('kv','readwrite');t.objectStore('kv').put(v,k);t.oncomplete=()=>res()})};
+function lbUi(){const b=$('bk');if(!b)return;
+ const m={on:['#7fe0b0','● Live-Sicherung '+(LB.last?LB.last.toLocaleTimeString('de-DE'):'aktiv')],ask:['#ffd27f','⚠ Sicherung pausiert – antippen'],off:['#ff8a80','⚠ Keine Live-Sicherung – antippen'],err:['#ff8a80','⚠ Sicherung fehlgeschlagen – antippen'],unsupported:['#ff8a80','⚠ Live-Sicherung nur in Chrome/Edge']}[LB.state]||['#fff',''];
+ b.innerHTML=`<button onclick="lbClick()" style="background:transparent;border:2px solid ${m[0]};color:${m[0]};min-height:46px;padding:4px 12px;font-size:15px">${m[1]}</button>`}
+function lbClick(){if(LB.state=='ask')lbAsk();else if(LB.state=='on')toast('Live-Sicherung läuft. Ordner: '+LB.h.name,null,2500);else lbSetup()}
+async function lbReadLive(){try{const f=await (await LB.h.getFileHandle('navibar-live.json')).getFile();const d=JSON.parse(await f.text());return Array.isArray(d.drinks)&&Array.isArray(d.customers)?d:null}catch(e){return null}}
+const isEmptyS=()=>!S.customers.length&&!S.drinks.length&&!S.cashiers.length;
+function lbOfferRestore(d){ask(`Im Sicherungsordner liegt eine Sicherung:\n${d.customers.length} Kunden, ${d.drinks.length} Getränke.\nJetzt wiederherstellen?`,()=>{S=d;norm();save();cur=null;render()},'Wiederherstellen')}
+async function lbSetup(){if(!window.showDirectoryPicker){alert('Die Live-Sicherung funktioniert nur in Chrome oder Edge.');return}
+ try{const h=await showDirectoryPicker({mode:'readwrite',id:'navibar-sicherung'});LB.h=h;await idbSet('dir',h);LB.state='on';
+  const old=await lbReadLive();
+  if(old&&(old.customers.length||old.drinks.length)){
+   if(isEmptyS()){lbUi();render();lbOfferRestore(old);return}
+   const g=await h.getFileHandle('navibar-vorher-'+new Date().toISOString().replace(/[:.]/g,'-').slice(0,19)+'.json',{create:true});const w=await g.createWritable();await w.write(JSON.stringify(old));await w.close()}
+  await lbWrite();toast('Live-Sicherung aktiv',null,2000)}
+ catch(e){if(e.name!='AbortError'){LB.state='err';alert('Ordner konnte nicht gewählt werden: '+e.message)}}
+ lbUi();render()}
+async function lbInit(){try{if(!window.showDirectoryPicker){LB.state='unsupported';lbUi();return}
+ const h=await idbGet('dir');if(!h){LB.state='off';lbUi();return}LB.h=h;
+ LB.state=(await h.queryPermission({mode:'readwrite'}))=='granted'?'on':'ask'}catch(e){LB.state='off'}lbUi();render()}
+async function lbAsk(){try{LB.state=(await LB.h.requestPermission({mode:'readwrite'}))=='granted'?'on':'ask';if(LB.state=='on'){const d=await lbReadLive();if(d&&isEmptyS()&&(d.customers.length||d.drinks.length))lbOfferRestore(d);else await lbWrite()}}catch(e){LB.state='err'}lbUi();render()}
+async function lbRestore(){if(!LB.h){alert('Zuerst den Sicherungsordner wählen.');return}
+ try{if((await LB.h.requestPermission({mode:'readwrite'}))!='granted')return}catch(e){return}
+ const d=await lbReadLive();if(!d){alert('Keine gültige Live-Sicherung im Ordner gefunden.');return}lbOfferRestore(d)}
+function lbQueue(){if(LB.state!='on')return;clearTimeout(LB.t);LB.t=setTimeout(lbWrite,250)}
+async function lbWrite(){if(LB.state!='on'||!LB.h)return;if(LB.busy){LB.again=true;return}LB.busy=true;
+ try{if(isEmptyS()){const o=await lbReadLive();if(o&&(o.customers.length||o.drinks.length)){LB.busy=false;return}}
+  const data=JSON.stringify(S);
+  for(const n of ['navibar-live.json','navibar-backup-'+today()+'.json']){const f=await LB.h.getFileHandle(n,{create:true});const w=await f.createWritable();await w.write(data);await w.close()}
+  if(LB.rot!=today()){LB.rot=today();const names=[];for await(const [n] of LB.h.entries())if(/^navibar-backup-\d{4}-\d{2}-\d{2}\.json$/.test(n))names.push(n);names.sort().reverse();for(const n of names.slice(7))await LB.h.removeEntry(n)}
+  LB.last=new Date()}
+ catch(e){LB.state=e&&e.name=='NotAllowedError'?'ask':'err'}
+ LB.busy=false;lbUi();if(LB.again){LB.again=false;lbWrite()}}
+
+/* ===== Excel: Vorlage, Export, Import (eigener xlsx-Schreiber/-Leser, komplett offline) ===== */
+const CRCT=(()=>{const t=[];for(let n=0;n<256;n++){let c=n;for(let k=0;k<8;k++)c=c&1?0xEDB88320^(c>>>1):c>>>1;t[n]=c>>>0}return t})();
+const crc32=b=>{let c=0xFFFFFFFF;for(let i=0;i<b.length;i++)c=CRCT[(c^b[i])&255]^(c>>>8);return(c^0xFFFFFFFF)>>>0};
+function zipStore(files){const te=new TextEncoder(),parts=[],cd=[],u16=n=>[n&255,(n>>8)&255],u32=n=>[n&255,(n>>8)&255,(n>>16)&255,(n>>>24)&255];let off=0;
+ files.forEach(([name,txt])=>{const nb=te.encode(name),d=te.encode(txt),crc=crc32(d);
+  const lh=new Uint8Array([0x50,0x4b,3,4,...u16(20),...u16(0x0800),...u16(0),...u16(0),...u16(0x21),...u32(crc),...u32(d.length),...u32(d.length),...u16(nb.length),...u16(0)]);
+  parts.push(lh,nb,d);cd.push(new Uint8Array([0x50,0x4b,1,2,...u16(20),...u16(20),...u16(0x0800),...u16(0),...u16(0),...u16(0x21),...u32(crc),...u32(d.length),...u32(d.length),...u16(nb.length),...u16(0),...u16(0),...u16(0),...u16(0),...u32(0),...u32(off)]),nb);off+=lh.length+nb.length+d.length});
+ const cs=cd.reduce((a,b)=>a+b.length,0);
+ return new Blob([...parts,...cd,new Uint8Array([0x50,0x4b,5,6,0,0,0,0,...u16(files.length),...u16(files.length),...u32(cs),...u32(off),0,0])],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'})}
+function xlsxBlob(rows,widths,sheet){const X='<?xml version="1.0" encoding="UTF-8" standalone="yes"?>',NS='http://schemas.openxmlformats.org/',col=i=>String.fromCharCode(65+i),x=s=>String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+ const sd=rows.map((r,ri)=>`<row r="${ri+1}">${r.map((v,ci)=>v===''||v==null?'':typeof v=='number'?`<c r="${col(ci)}${ri+1}"${ri==0?' s="1"':''}><v>${v}</v></c>`:`<c r="${col(ci)}${ri+1}" t="inlineStr"${ri==0?' s="1"':''}><is><t xml:space="preserve">${x(v)}</t></is></c>`).join('')}</row>`).join('');
+ return zipStore([
+ ['[Content_Types].xml',X+`<Types xmlns="${NS}package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/><Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/><Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/></Types>`],
+ ['_rels/.rels',X+`<Relationships xmlns="${NS}package/2006/relationships"><Relationship Id="rId1" Type="${NS}officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/></Relationships>`],
+ ['xl/workbook.xml',X+`<workbook xmlns="${NS}spreadsheetml/2006/main" xmlns:r="${NS}officeDocument/2006/relationships"><sheets><sheet name="${sheet||'Getränke'}" sheetId="1" r:id="rId1"/></sheets></workbook>`],
+ ['xl/_rels/workbook.xml.rels',X+`<Relationships xmlns="${NS}package/2006/relationships"><Relationship Id="rId1" Type="${NS}officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/><Relationship Id="rId2" Type="${NS}officeDocument/2006/relationships/styles" Target="styles.xml"/></Relationships>`],
+ ['xl/styles.xml',X+`<styleSheet xmlns="${NS}spreadsheetml/2006/main"><fonts count="2"><font><sz val="11"/><name val="Calibri"/></font><font><b/><sz val="11"/><name val="Calibri"/></font></fonts><fills count="2"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill></fills><borders count="1"><border><left/><right/><top/><bottom/><diagonal/></border></borders><cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs><cellXfs count="2"><xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/><xf numFmtId="0" fontId="1" fillId="0" borderId="0" xfId="0" applyFont="1"/></cellXfs><cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles></styleSheet>`],
+ ['xl/worksheets/sheet1.xml',X+`<worksheet xmlns="${NS}spreadsheetml/2006/main"><cols>${widths.map((w,i)=>`<col min="${i+1}" max="${i+1}" width="${w}" customWidth="1"/>`).join('')}</cols><sheetData>${sd}</sheetData></worksheet>`]])}
+async function unzip(buf){const dv=new DataView(buf),u8=new Uint8Array(buf);let e=u8.length-22;while(e>=0&&dv.getUint32(e,true)!=0x06054b50)e--;if(e<0)throw 0;
+ const n=dv.getUint16(e+10,true),out={};let p=dv.getUint32(e+16,true);
+ for(let i=0;i<n;i++){const meth=dv.getUint16(p+10,true),cs=dv.getUint32(p+20,true),nl=dv.getUint16(p+28,true),el=dv.getUint16(p+30,true),cl=dv.getUint16(p+32,true),lo=dv.getUint32(p+42,true),name=new TextDecoder().decode(u8.subarray(p+46,p+46+nl));
+  const ds=lo+30+dv.getUint16(lo+26,true)+dv.getUint16(lo+28,true),data=u8.subarray(ds,ds+cs);
+  out[name]=meth==0?data:new Uint8Array(await new Response(new Blob([data]).stream().pipeThrough(new DecompressionStream('deflate-raw'))).arrayBuffer());p+=46+nl+el+cl}
+ return out}
+const xdec=s=>s.replace(/&#x([0-9a-f]+);/gi,(_,h)=>String.fromCodePoint(parseInt(h,16))).replace(/&#(\d+);/g,(_,d)=>String.fromCodePoint(+d)).replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&quot;/g,'"').replace(/&apos;/g,"'").replace(/&amp;/g,'&');
+async function xlsxRows(buf){const z=await unzip(buf),td=new TextDecoder(),sn=Object.keys(z).filter(k=>/^xl\/worksheets\/sheet\d+\.xml$/.test(k)).sort()[0];if(!sn)throw 0;
+ const ss=z['xl/sharedStrings.xml']?[...td.decode(z['xl/sharedStrings.xml']).matchAll(/<si\b[^>]*>([\s\S]*?)<\/si>/g)].map(m=>[...m[1].matchAll(/<t\b[^>]*>([\s\S]*?)<\/t>/g)].map(t=>xdec(t[1])).join('')):[];
+ const rows=[];let auto=0;
+ for(const r of td.decode(z[sn]).matchAll(/<row\b([^>]*)>([\s\S]*?)<\/row>/g)){const rm=r[1].match(/\br="(\d+)"/),ri=rm?+rm[1]-1:auto++,arr=[];
+  for(const c of r[2].matchAll(/<c\b([^>]*?)(?:\/>|>([\s\S]*?)<\/c>)/g)){const rr=(c[1].match(/\br="([A-Z]+)\d*"/)||[])[1],tt=(c[1].match(/\bt="([^"]*)"/)||[])[1],body=c[2]||'',vm=body.match(/<v>([\s\S]*?)<\/v>/);let ci=0;if(rr)for(const ch of rr)ci=ci*26+ch.charCodeAt(0)-64;ci=rr?ci-1:arr.length;let val='';
+   if(tt=='s')val=vm?ss[+vm[1]]||'':'';else if(tt=='inlineStr')val=[...body.matchAll(/<t\b[^>]*>([\s\S]*?)<\/t>/g)].map(t=>xdec(t[1])).join('');else if(vm)val=(tt=='str'||tt=='b'||tt=='e')?xdec(vm[1]):(isNaN(parseFloat(vm[1]))?'':parseFloat(vm[1]));arr[ci]=val}
+  rows[ri]=arr}
+ return rows.filter(Boolean).map(r=>Array.from(r,x=>x??''))}
+function csvRows(t){t=t.replace(/^\uFEFF/,'');const d=(t.split('\n')[0].match(/;/g)||[]).length>=(t.split('\n')[0].match(/,/g)||[]).length?';':',';const rows=[];let r=[],f='',q=false;
+ for(let i=0;i<t.length;i++){const ch=t[i];if(q){if(ch=='"'){if(t[i+1]=='"'){f+='"';i++}else q=false}else f+=ch}else if(ch=='"')q=true;else if(ch==d){r.push(f);f=''}else if(ch=='\n'||ch=='\r'){if(ch=='\r'&&t[i+1]=='\n')i++;r.push(f);f='';rows.push(r);r=[]}else f+=ch}
+ if(f!==''||r.length){r.push(f);rows.push(r)}return rows.filter(r=>r.some(x=>String(x).trim()!==''))}
+const dlBlob=(name,b)=>{const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=name;a.click()};
+const XLH=['Name','Kategorie','Menge','Einheit','Preis Teilnehmer','Preis Ausbilder'];
+const amtVal=a=>{const n=parseFloat(String(a).replace(',','.'));return isNaN(n)?a:n};
+function xlTemplate(){dlBlob('Getraenke-Vorlage.xlsx',xlsxBlob([[...XLH,'Hinweis'],['Pils','Bier',500,'ml',3.5,3,'Beispielzeilen überschreiben oder löschen. Einheit: ml oder Stück.'],['Cola','Softdrink',330,'ml',2.5,2.5,'Abgleich mit vorhandenen Getränken über Name + Menge + Einheit.'],['Brezel','Snacks',1,'Stück',1.5,1.5,'Ausbilder-Preis leer = gleich wie Teilnehmer-Preis.']],[22,18,10,10,18,18,70]))}
+function xlExport(){const l=S.drinks.slice().sort((a,b)=>a.name.localeCompare(b.name,'de')).map(d=>[d.name,catName(d),amtVal(d.amount),d.unit,d.price/100,(d.priceA!=null?d.priceA:d.price)/100]);
+ dlBlob('Getraenke-'+today()+'.xlsx',xlsxBlob([XLH,...l],[22,18,10,10,18,18]))}
+async function xlImport(f){if(!f)return;let rows;
+ try{rows=/\.csv$/i.test(f.name)?csvRows(await f.text()):await xlsxRows(await f.arrayBuffer())}catch(e){alert('Die Datei konnte nicht gelesen werden. Bitte die Excel-Vorlage (.xlsx) verwenden.');return}
+ const hd=(rows[0]||[]).map(x=>String(x).toLowerCase().trim()),ix=k=>hd.findIndex(h=>k.some(w=>h.includes(w)));
+ const I={n:ix(['name','getränk']),c:ix(['kategorie']),a:ix(['menge']),u:ix(['einheit']),p:ix(['teilnehmer']),pa:ix(['ausbilder'])};if(I.p<0)I.p=ix(['preis']);
+ if(I.n<0||I.a<0||I.p<0){alert('Spalten nicht gefunden. Erwartet: Name, Kategorie, Menge, Einheit, Preis Teilnehmer, Preis Ausbilder.');return}
+ const num=x=>{const v=typeof x=='number'?x:parseFloat(String(x).replace(/[\s€]/g,'').replace(',','.'));return isNaN(v)?null:v};
+ const key=(n,a,u)=>n.toLowerCase().trim()+'|'+parseFloat(String(a).replace(',','.'))+'|'+u;
+ const ops=[],err=[],newCats=new Set();let same=0;const seen=new Map(),cur=new Map(S.drinks.map(d=>[key(d.name,d.amount,d.unit),d]));
+ rows.slice(1).forEach((r,i)=>{const g=j=>j>=0&&r[j]!==undefined?r[j]:'',name=String(g(I.n)).trim();if(!name)return;
+  let amt=num(g(I.a)),un=String(g(I.u)||'ml').trim().toLowerCase(),p=num(g(I.p)),pa=String(g(I.pa)).trim()!==''?num(g(I.pa)):p;
+  if(amt==null||p==null||pa==null||p<0||pa<0){err.push(i+2);return}
+  if(/^(l|liter)$/.test(un)){amt*=1000;un='ml'}else un=/^(st|stk|stück|stueck|stuck)/.test(un)?'Stück':'ml';
+  const a=String(Math.round(amt*1000)/1000).replace('.',','),cat=String(g(I.c)).trim(),k=key(name,a,un);
+  const hit=seen.get(k)||cur.get(k),o={name,amount:a,unit:un,price:Math.round(p*100),priceA:Math.round(pa*100),cat};
+  if(hit&&!hit.__new){const ch=hit.price!=o.price||(hit.priceA!=null?hit.priceA:hit.price)!=o.priceA||(cat&&catName(hit).toLowerCase()!=cat.toLowerCase());if(ch)ops.push({d:hit,o});else same++}
+  else if(hit&&hit.__new){Object.assign(hit,o)}
+  else{const n={__new:true,...o};seen.set(k,n);ops.push({n})}
+  if(cat&&!S.cats.some(c=>c.name.toLowerCase()==cat.toLowerCase()))newCats.add(cat)});
+ const nn=ops.filter(x=>x.n).length,nu=ops.length-nn;
+ if(!nn&&!nu){alert('Nichts zu importieren.'+(same?`\n${same} Getränke sind bereits aktuell.`:'')+(err.length?`\nFehler in Zeile ${err.slice(0,8).join(', ')}.`:''));return}
+ ask(`Excel-Import:\n${nn} neue Getränke\n${nu} aktualisiert\n${same} unverändert${err.length?`\n${err.length} Zeilen mit Fehler (Zeile ${err.slice(0,6).join(', ')})`:''}${newCats.size?`\nNeue Kategorien: ${[...newCats].join(', ')}`:''}`,()=>{
+  const catId=name=>{if(!name)return '';let k=S.cats.find(c=>c.name.toLowerCase()==name.toLowerCase());if(!k){k={id:uid(),name};S.cats.push(k)}return k.id};
+  ops.forEach(x=>{const o=x.n||x.o,cid=catId(o.cat);
+   if(x.d){const d=x.d;if(d.price!=o.price||(d.priceA!=null?d.priceA:d.price)!=o.priceA)d.priceSince=Date.now();d.price=o.price;d.priceA=o.priceA;if(o.cat){d.cat=cid;d.type=(S.cats.find(c=>c.id==cid)||{}).name||''}}
+   else S.drinks.push({id:uid(),name:o.name,type:o.cat?(S.cats.find(c=>c.id==cid)||{}).name:'',cat:cid,amount:o.amount,unit:o.unit,price:o.price,priceA:o.priceA})});
+  save();render();toast(`✔ Import: ${nn} neu, ${nu} aktualisiert`,null,3000)},'Importieren')}
+
+/* ===== Admin: Zahlungsarchiv, Löschprotokoll, Speicherplatz ===== */
+let zf={per:'all',k:'',q:''},zsel=new Set(),zopen=new Set(),ausMode='gebucht';
+const dtf=ts=>new Date(ts).toLocaleString('de-DE',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'});
+const aTot=a=>a.entries.reduce((s,e)=>s+e.price*e.qty,0);
+function zList(){const n=new Date(),t0=new Date(n.getFullYear(),n.getMonth(),n.getDate()).getTime(),from={today:t0,week:t0-((n.getDay()+6)%7)*864e5,month:new Date(n.getFullYear(),n.getMonth(),1).getTime(),year:new Date(n.getFullYear(),0,1).getTime(),all:0}[zf.per],q=zf.q.toLowerCase();
+ return S.archive.filter(a=>a.paidAt>=from&&(!zf.k||a.cashier==zf.k)&&(a.name+' '+a.no).toLowerCase().includes(q)).sort((a,b)=>b.paidAt-a.paidAt)}
+function zsumHtml(){const l=zList(),m={};l.forEach(a=>m[a.method||'ohne Angabe']=(m[a.method||'ohne Angabe']||0)+aTot(a));
+ return `${l.length} Zahlungen · ${eur(l.reduce((s,a)=>s+aTot(a),0))} <small class="mut" style="font-size:15px">${Object.entries(m).map(([k,v])=>k+' '+eur(v)).join(' · ')}</small>`}
+function zlistHtml(){const l=zList();return l.map(a=>`<div class="card zrow"><div class="row" style="margin:0"><button class="zc" onclick="zTog('${a.id}')">${zsel.has(a.id)?'☑':'☐'}</button><div style="flex:3;cursor:pointer" onclick="zOpen('${a.id}')"><b>${dtf(a.paidAt)}</b> · #${a.no} ${esc(a.name)}<br><small class="mut">${esc(a.cashier||'–')} · ${esc(a.method||'–')}</small></div><b style="flex:1;text-align:right;font-size:22px">${eur(aTot(a))}</b></div>
+ ${zopen.has(a.id)?`<div style="margin-top:8px">${a.entries.map(e=>`<div class="pos"><div><b>${e.qty}× ${esc(e.label)}</b><small>${e.ts?fmt(e.ts):''}${e.cashier?' · '+esc(e.cashier):''}</small></div><span class="${e.price<0?'neg':''}">${eur(e.price*e.qty)}</span></div>`).join('')}<div class="row"><button class="b" onclick="zReopen('${a.id}')">↩ Wieder öffnen</button><button class="r" onclick="zDel('${a.id}')">Löschen</button></div></div>`:''}</div>`).join('')||'<p class="mut">Keine Zahlungen im gewählten Zeitraum.</p>'}
+function vZahl(){const ks=[...new Set(S.archive.map(a=>a.cashier).filter(Boolean))].sort();
+ return `<div class="row noprint">${[['today','Heute'],['week','Woche'],['month','Monat'],['year','Jahr'],['all','Alle']].map(([k,t])=>`<button class="${zf.per==k?'on':''}" onclick="zf.per='${k}';render()">${t}</button>`).join('')}</div>
+ <div class="row"><select onchange="zf.k=this.value;render()"><option value="">Alle Kassierer</option>${ks.map(k=>`<option ${zf.k==k?'selected':''}>${esc(k)}</option>`).join('')}</select><input id="zq" placeholder="Kunde suchen" value="${esc(zf.q)}" oninput="zf.q=this.value;zRef()"></div>
+ <p id="zsum" class="total" style="font-size:22px">${zsumHtml()}</p>
+ <div class="row"><button onclick="zExcel()">⬇ Excel</button><button onclick="zAll()">Alle sichtbaren markieren</button><button class="r" id="zdb" onclick="zDelSel()">Auswahl löschen (${zsel.size})</button><button onclick="showLog()">Löschprotokoll (${S.dellog.length})</button></div>
+ <div id="zlist">${zlistHtml()}</div>`}
+function zRef(){$('zlist').innerHTML=zlistHtml();$('zsum').innerHTML=zsumHtml();$('zdb').textContent=`Auswahl löschen (${zsel.size})`}
+const zTog=id=>{zsel.has(id)?zsel.delete(id):zsel.add(id);zRef()},zOpen=id=>{zopen.has(id)?zopen.delete(id):zopen.add(id);zRef()},zAll=()=>{zList().forEach(a=>zsel.add(a.id));zRef()};
+function zDelAsk(ids){const l=S.archive.filter(a=>ids.includes(a.id));if(!l.length){toast('Nichts ausgewählt','#d9822b');return}const t=l.reduce((s,a)=>s+aTot(a),0);
+ ask(`${l.length==1?`Zahlung von #${l[0].no} ${l[0].name} (${eur(t)})`:`${l.length} Zahlungen (${eur(t)})`} löschen?\n\nDie Auswertung ändert sich dadurch. Das Löschen wird im Löschprotokoll festgehalten.`,()=>{
+  l.forEach(a=>S.dellog.push({ts:Date.now(),no:a.no,name:a.name,sum:aTot(a),paidAt:a.paidAt,cashier:a.cashier||'',method:a.method||''}));
+  S.archive=S.archive.filter(a=>!ids.includes(a.id));ids.forEach(i=>{zsel.delete(i);zopen.delete(i)});save();render();toast('Gelöscht – im Protokoll vermerkt')},'Löschen','r')}
+const zDel=id=>zDelAsk([id]),zDelSel=()=>zDelAsk([...zsel]);
+function zReopen(id){const a=S.archive.find(x=>x.id==id);if(!a)return;
+ ask(`Zahlung von #${a.no} ${a.name} (${eur(aTot(a))}) wieder öffnen?\nDie Positionen kommen zurück auf die offene Rechnung des Kunden.`,()=>{
+  let c=S.customers.find(x=>x.no==a.no);
+  if(!c){const sp=a.name.split(' ');c={id:uid(),no:a.no,first:sp.shift()||'',last:sp.join(' '),role:a.role||'T',active:true,created:Date.now(),entries:[],paid:false};S.customers.push(c);if(!S.usedNos.includes(a.no))S.usedNos.push(a.no)}
+  c.active=true;c.created=Date.now();c.entries.push(...a.entries.map(e=>({...e})));S.archive=S.archive.filter(x=>x!=a);zsel.delete(id);zopen.delete(id);save();render();toast('Wieder geöffnet bei #'+c.no)},'Wieder öffnen')}
+function zExcel(){const l=zList();dlBlob('Zahlungen-'+today()+'.xlsx',xlsxBlob([['Datum','Uhrzeit','Nr','Kunde','Typ','Kassierer','Zahlart','Summe','Positionen'],...l.map(a=>{const d=new Date(a.paidAt);return[d.toLocaleDateString('de-DE'),d.toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit'}),a.no,a.name,a.role||'',a.cashier||'',a.method||'',aTot(a)/100,a.entries.map(e=>`${e.qty}× ${e.label} ${eur(e.price*e.qty)}`).join('; ')]})],[12,8,6,24,6,14,12,10,70],'Zahlungen'))}
+function showLog(){const o=document.createElement('div');o.className='ov';o.style.zIndex=30;
+ o.innerHTML=`<div class="box"><h2 style="margin-top:0">Löschprotokoll</h2><table><tr><th>Gelöscht am</th><th>Zahlung vom</th><th>Kunde</th><th>Kassierer</th><th class="n">Betrag</th></tr>${S.dellog.slice().reverse().map(d=>`<tr><td>${dtf(d.ts)}</td><td>${dtf(d.paidAt)}</td><td>#${d.no} ${esc(d.name)}</td><td>${esc(d.cashier)}</td><td class="n">${eur(d.sum)}</td></tr>`).join('')||'<tr><td colspan="5" class="mut">Noch nichts gelöscht.</td></tr>'}</table><p class="mut">Dieses Protokoll kann nicht gelöscht werden.</p><div class="row"><button class="b" id="lc">Schließen</button></div></div>`;
+ document.body.appendChild(o);o.querySelector('#lc').onclick=()=>o.remove()}
+function memBar(){const u=JSON.stringify(S).length,pc=Math.min(100,Math.round(u/5e6*100));
+ return `<div style="background:#fff;border:2px solid var(--line);border-radius:10px;height:34px;overflow:hidden"><div style="height:100%;width:${Math.max(pc,1)}%;background:${pc>80?'var(--red)':pc>60?'var(--orange)':'var(--green)'}"></div></div><p class="mut">${(u/1e6).toFixed(2)} MB von ca. 5 MB belegt (${pc} %), ${S.archive.length} Zahlungen im Archiv.${pc>60?' Tipp: alte Zahlungen als Excel exportieren und dann löschen.':''}</p>`}
+
+render();autoDeact();setInterval(autoDeact,3600000);if(JSON.stringify(S).length>4e6)setTimeout(()=>toast('⚠ Speicher fast voll – bitte im Admin-Bereich prüfen','#d9822b',6000),800);lbInit().then(async()=>{if(LB.state=='on'){const d=await lbReadLive();if(d&&isEmptyS()&&(d.customers.length||d.drinks.length))lbOfferRestore(d)}});
+</script></body></html>
