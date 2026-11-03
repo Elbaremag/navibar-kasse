@@ -1,5 +1,5 @@
 // Navibar Kasse – Service Worker: Online immer die neueste Version laden, offline die gespeicherte Kopie nutzen.
-const V = 'navibar-v3';
+const V = 'navibar-v4';
 const FILES = ['./', 'index.html', 'manifest.webmanifest', 'icon-192.png', 'icon-512.png'];
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(V).then(c => c.addAll(FILES)).then(() => self.skipWaiting()));

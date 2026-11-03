@@ -209,7 +209,7 @@ td,th{padding:14px 10px}
 /* ===== SUPABASE-ZUGANG – hier einmal eintragen (Project Settings -> API) =====
    Der "anon/publishable"-Key ist öffentlich gedacht. Geschützt sind die Daten durch Login und Zugriffsregeln.
    NIE den "service_role"-Key hier eintragen. Der Admin kann diese Werte in der Kasse nicht ändern. */
-const NBCFG={url:'https://zxctszrewffuloqmlbbu.supabase.co/rest/v1/',key:'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp4Y3RzenJld2ZmdWxvcW1sYmJ1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTM2MDQ1MDcsImV4cCI6MjEwOTE4MDUwN30.mqoK6fircId1lISkabP6YSG4zr24AaBCM5a3Qs1A2Nw'};
+const NBCFG={url:'https://DEIN-PROJEKT.supabase.co',key:'DEIN-ANON-KEY'};
 NBCFG.url=NBCFG.url.trim().replace(/\/+$/,'').replace(/\/(rest|auth)\/v1$/,'');NBCFG.key=NBCFG.key.trim();   // schadet nicht, falls ein Schrägstrich am Ende oder ein Pfad mitkopiert wurde
 /* ===== QR-Encoder (Byte-Modus, ECC L, Version 1-20, Maske 0) – komplett offline ===== */
 const QR=(()=>{
@@ -360,7 +360,7 @@ function dbReset(){DB.SRV=null;DB.ready=false;DB.started=false;DB.snapHash='';DB
  S.customers=[];S.drinks=[];S.cats=[];S.vouchers=[];S.cashiers=[];S.archive=[];S.dellog=[];S.usedNos=[];S.mailTpl=null;S.bon=null;S.rights=null;norm();try{sessionStorage.removeItem('navibar-snap')}catch(e){}}
 function dbUi(){const b=$('gh');if(!b)return;if(!AUTH.s||!DB.started){b.innerHTML='';return}const n=DB.OUT.length;
  const m={ok:['#7fe0b0','● <span class="cl">Live in Supabase gesichert</span>'],sync:['#ffd27f','● <span class="cl">sichere … ('+n+')</span>'],offline:['#ff8a80','⚠ <span class="cl">Offline'+(n?' – '+n+' Änderung(en) warten':'')+'</span>'],err:['#ff8a80','⚠ <span class="cl">Verbindungsproblem – antippen</span>'],loading:['#ffd27f','● <span class="cl">lade …</span>']}[DB.state]||['#ffd27f','●'];
- b.innerHTML=`<button onclick="dbClick()" style="background:transparent;border:2px solid ${m[0]};color:${m[0]};min-height:46px;padding:4px 12px;font-size:15px">${m[1]}</button>`}
+ b.innerHTML=`<button onclick="dbClick()" style="background:transparent;border:2px solid ${m[0]};color:${m[0]};min-height:46px;padding:4px 12px;font-size:15px">${m[1]}</button>`+(DEV.station?`<button onclick="stDialog()" style="background:transparent;border:2px solid #cfd8dc;color:#fff;min-height:46px;padding:4px 10px;font-size:15px">🖨<span class="cl"> Druckstation</span></button>`:'')}
 function dbClick(){if(DB.state=='ok')toast('Alles ist live in Supabase gesichert'+(RT.ok?' (Sofort-Abgleich aktiv)':' (Abgleich alle 5 Sekunden)'),null,2500);else{toast(DB.err||'Verbinde …','#d9822b',3000);pump();refresh(true)}}
 function renderLoading(){document.body.classList.remove('locked');['nav','who','tm','ov'].forEach(i=>{$(i).innerHTML=''});
  $('main').innerHTML=`<div style="min-height:60vh;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;text-align:center"><h2 style="color:var(--navy)">⚓ Lade Kassendaten …</h2>${DB.state=='err'||DB.state=='offline'?`<p class="mut">${esc(DB.err||'Keine Verbindung')}</p><button class="b" onclick="refresh(true)">Erneut versuchen</button>`:''}</div>`}
@@ -370,7 +370,7 @@ function rtStart(){if(RT.ws||!AUTH.s||typeof WebSocket=='undefined')return;let w
  try{ws=new WebSocket(NBCFG.url.replace(/^http/,'ws')+'/realtime/v1/websocket?apikey='+encodeURIComponent(NBCFG.key)+'&vsn=1.0.0')}catch(e){return rtLater()}
  RT.ws=ws;
  ws.onopen=async()=>{try{const tok=await auToken();ws.send(JSON.stringify({topic:'realtime:nb',event:'phx_join',ref:'1',join_ref:'1',payload:{config:{broadcast:{ack:false,self:false},presence:{key:''},private:false,
-   postgres_changes:['nb_customers','nb_entries','nb_drinks','nb_cats','nb_vouchers','nb_cashiers','nb_settings','nb_archive'].map(t=>({event:'*',schema:'public',table:t}))},access_token:tok}}));
+   postgres_changes:['nb_customers','nb_entries','nb_drinks','nb_cats','nb_vouchers','nb_cashiers','nb_settings','nb_archive','nb_print_jobs'].map(t=>({event:'*',schema:'public',table:t}))},access_token:tok}}));
   RT.hb=setInterval(()=>{if(ws.readyState==1)ws.send(JSON.stringify({topic:'phoenix',event:'heartbeat',payload:{},ref:String(++RT.ref)}))},25000)}catch(e){}};
  ws.onmessage=m=>{let j;try{j=JSON.parse(m.data)}catch(e){return}
   if(j.topic=='realtime:nb'&&j.event=='phx_reply'){RT.ok=!!(j.payload&&j.payload.status=='ok');dbUi()}
@@ -380,7 +380,7 @@ function rtStart(){if(RT.ws||!AUTH.s||typeof WebSocket=='undefined')return;let w
 function rtLater(){clearTimeout(RT.rt);if(AUTH.s)RT.rt=setTimeout(rtStart,8000)}
 function rtStop(){clearTimeout(RT.rt);clearInterval(RT.hb);RT.ok=false;const w=RT.ws;RT.ws=null;if(w){w.onclose=null;try{w.close()}catch(e){}}}
 function rtToken(){if(RT.ws&&RT.ws.readyState==1&&AUTH.s)RT.ws.send(JSON.stringify({topic:'realtime:nb',event:'access_token',payload:{access_token:AUTH.s.at},ref:String(++RT.ref)}))}
-function rtEvent(t){clearTimeout(RT.ev);RT.ev=setTimeout(()=>{if(t=='nb_archive'){zInval();if(adminOn){if(atab=='zahlungen')zLoad(false);else if(atab=='auswertung'&&canRebuild())render()}return}refresh()},250)}
+function rtEvent(t){if(t=='nb_print_jobs'){if(DEV.station)stPoll();return}clearTimeout(RT.ev);RT.ev=setTimeout(()=>{if(t=='nb_archive'){zInval();if(adminOn){if(atab=='zahlungen')zLoad(false);else if(atab=='auswertung'&&canRebuild())render()}return}refresh()},250)}
 setInterval(()=>{if(!AUTH.s||AUTH.rec||!DB.started)return;
  if(DB.defer&&canRebuild()&&!DB.OUT.length){DB.defer=false;rebuild();render()}
  if(DB.OUT.length&&!DB.busy&&DB.state!='offline')pump();
@@ -422,7 +422,7 @@ function vUeb(){const tot=S.customers.reduce((a,c)=>a+sum(c),0),op=S.customers.f
  return `<table><tr><th>Nr.</th><th>Name</th><th>Typ</th><th class="n">Summe</th><th>Status</th><th class="noprint"></th></tr>${S.customers.filter(c=>sum(c)!==0).map(c=>`<tr><td>${c.no}</td><td>${esc(c.first)} ${esc(c.last)}${c.nick?` „${esc(c.nick)}“`:''}${c.active===false?' <small class="mut">(deaktiviert)</small>':''}</td><td>${c.role}</td><td class="n">${eur(sum(c))}</td><td>${badge(c)||'–'}</td><td class="noprint"><button onclick="cur='${c.id}';render()">Öffnen</button></td></tr>`).join('')}</table>
  ${S.customers.some(c=>sum(c)!==0)?'':'<p class="mut">Keine offenen Kunden.</p>'}<p class="total">Gesamt offen ${eur(tot)}</p><div class="row noprint"><button class="b" onclick="print()">Übersicht drucken</button><button onclick="dl('uebersicht-'+today()+'.txt',S.customers.filter(c=>sum(c)!==0).map(billText).join('\n\n----------\n'),'text/plain')">Alle Abrechnungen als Textdatei</button></div>`}
 function vBackup(){const st={ok:'<b style="color:var(--green)">live gesichert</b>',sync:'<b style="color:var(--orange)">sichert gerade …</b>',offline:'<b style="color:var(--red)">offline</b>',err:'<b style="color:var(--red)">Verbindungsproblem</b>',loading:'<b>lädt …</b>'}[DB.state]||'';
- return `<p class="mut">Programmversion ${APP_VERSION}</p><p style="font-size:20px">Alle Daten liegen live in Supabase (${esc(NBCFG.url.replace('https://',''))}). Jede Änderung wird sofort gesichert, mehrere Geräte arbeiten gleichzeitig.</p><p>Status: ${st}${DB.OUT.length?` · ${DB.OUT.length} Änderung(en) warten auf Versand`:''}<br>Abgleich: ${RT.ok?'sofort (Echtzeit)':'alle 5 Sekunden'}</p>${devBox()}${kxBox()}`}
+ return `<p class="mut">Programmversion ${APP_VERSION}</p><p style="font-size:20px">Alle Daten liegen live in Supabase (${esc(NBCFG.url.replace('https://',''))}). Jede Änderung wird sofort gesichert, mehrere Geräte arbeiten gleichzeitig.</p><p>Status: ${st}${DB.OUT.length?` · ${DB.OUT.length} Änderung(en) warten auf Versand`:''}<br>Abgleich: ${RT.ok?'sofort (Echtzeit)':'alle 5 Sekunden'}</p><div id="stbox">${stBox()}</div>${devBox()}${kxBox()}`}
 
 /* ===== Kunde: Detail & Buchen ===== */
 let dtab='g',dtabC=null;const SVC={},TOP={};
@@ -433,7 +433,7 @@ function svcBar(c){const l=svcOn()?(SVC[c.id]||[]):[];if(!l.length)return '';
  return `<div class="svcbar"><div class="svct2"><b>Neu gebucht:</b> ${l.map(x=>x.qty+'× '+esc(x.label)).join(', ')}</div><div class="svcb"><button class="g" onclick="svcPrint('${c.id}')">🧾 Service-Bon drucken</button><button onclick="svcClear('${c.id}')">Ohne Bon</button></div></div>`}
 function svcClear(cid){delete SVC[cid];if(cur==cid)detail()}
 function svcPrint(cid){const c=S.customers.find(x=>x.id==cid),l=SVC[cid]||[];if(!c||!l.length)return;
- bonPrint({svc:true,no:c.no,name:(c.first+' '+c.last).trim(),cashier:cname(),entries:l.map(x=>({qty:x.qty,label:x.label,price:0}))});delete SVC[cid];if(cur==cid)detail()}
+ printOut({svc:true,no:c.no,name:(c.first+' '+c.last).trim(),cashier:cname(),entries:l.map(x=>({qty:x.qty,label:x.label,price:0}))});delete SVC[cid];if(cur==cid)detail()}
 function leaveCust(force){const c=S.customers.find(x=>x.id==cur);
  if(!force&&c&&svcOn()&&(SVC[c.id]||[]).length)return ask('Für die neu gebuchten Getränke einen Service-Bon drucken?',()=>{svcPrint(c.id);leaveCust(true)},'🖨 Service-Bon','g',()=>{delete SVC[c.id];leaveCust(true)},'Ohne Bon');
  cur=null;dq='';dcat='all';render()}
@@ -476,8 +476,8 @@ async function doPaid(cid,m){const c=S.customers.find(x=>x.id==cid);if(!c)return
  try{await dbFlush();const a=await auRpc('nb_pay',{p_customer:cid,p_method:m,p_cashier:cname(),p_archive:uid()});
   delete SVC[cid];await refresh(true);if(adminOn)admLoad(true);cur=null;render();toast('✔ Bezahlt – #'+a.no,null,1800);
   const o={no:a.no,name:a.name,cashier:a.cashier,entries:a.entries,method:a.method,ts:msOf(a.paid_at)},am=S.bon.auto;
-  if(am=='1')bonPrint(o);
-  else if(am!='2')ask('✔ Bezahlt per '+m+' – #'+a.no+'\n'+eur(a.entries.reduce((s,e)=>s+e.price*e.qty,0))+'\n\nQuittung drucken?',()=>bonPrint(o),'🖨 Bon drucken','g',null,'Ohne Bon')}
+  if(am=='1')printOut(o);
+  else if(am!='2')ask('✔ Bezahlt per '+m+' – #'+a.no+'\n'+eur(a.entries.reduce((s,e)=>s+e.price*e.qty,0))+'\n\nQuittung drucken?',()=>printOut(o),'🖨 Bon drucken','g',null,'Ohne Bon')}
  catch(e){toast(e.message=='keine_buchungen'?'Keine Buchungen zum Abschließen':'Bezahlen nicht möglich: '+auNet(e),'#c0392b',4500);refresh(true)}}
 function aktiv(id){const c=S.customers.find(x=>x.id==id);const off=c.active===false;c.active=off;if(off){c.created=Date.now();c.lastBooked=0}cur=null;save();render()}
 function delKunde(id){ask('Kunde mit allen Buchungen löschen?',()=>{S.customers=S.customers.filter(c=>c.id!=id);cur=null;save();render()},'Löschen','r')}
@@ -712,7 +712,7 @@ function render(){if(!AUTH.s||AUTH.rec)return renderLogin();
 function logout(){if(adminOn){auRpc('nb_admin_end').catch(()=>{});admClear()}cashier=null;adminOn=false;cur=null;dq='';dcat='all';render();tick()}
 function pick(id){cashier=id;tab='kunden';q='';idle=Date.now();render();tick();toast('Angemeldet: '+cname(),null,1200)}
 function renderStart(){$('nav').innerHTML='';$('who').innerHTML='';$('ov').innerHTML='';cur=null;
- $('main').innerHTML=`<div style="min-height:calc(100vh - 170px);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:30px"><h2 style="margin:0;color:var(--navy);font-size:clamp(26px,6vw,38px)">⚓ Wer kassiert?</h2><div style="display:flex;flex-wrap:wrap;gap:22px;justify-content:center;max-width:1100px">${S.cashiers.map(k=>`<button class="card b" style="width:min(310px,100%);min-height:150px;font-size:clamp(26px,6vw,34px);text-align:center" onclick="pick('${k.id}')">${esc(k.name)}</button>`).join('')||'<p class="mut">Noch kein Kassierer angelegt. Bitte im Admin-Bereich anlegen.</p>'}</div><button class="o" style="min-height:80px;font-size:26px;padding:12px 48px" onclick="adminLogin()">⚙ Admin</button></div>`.replace(/<button class="o"[^>]*adminLogin\(\)">⚙ Admin<\/button>/,isAdminAcct()?'$&':'')}
+ $('main').innerHTML=`<div style="min-height:calc(100vh - 170px);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:30px"><h2 style="margin:0;color:var(--navy);font-size:clamp(26px,6vw,38px)">⚓ Wer kassiert?</h2><div style="display:flex;flex-wrap:wrap;gap:22px;justify-content:center;max-width:1100px">${S.cashiers.map(k=>`<button class="card b" style="width:min(310px,100%);min-height:150px;font-size:clamp(26px,6vw,34px);text-align:center" onclick="pick('${k.id}')">${esc(k.name)}</button>`).join('')||'<p class="mut">Noch kein Kassierer angelegt. Bitte im Admin-Bereich anlegen.</p>'}</div><button class="o" style="min-height:80px;font-size:26px;padding:12px 48px" onclick="adminLogin()">⚙ Admin</button><button style="min-height:56px" onclick="stDialog()">🖨 Druckplatz${DEV.station?' (Druckstation aktiv)':''}</button></div>`.replace(/<button class="o"[^>]*adminLogin\(\)">⚙ Admin<\/button>/,isAdminAcct()?'$&':'')}
 function adminLogin(){modal('Admin-Anmeldung',`<input name="p" type="password" inputmode="numeric" maxlength="8" data-submit="1" placeholder="PIN">`,o=>{
  const pin=v(o,'p');if(!pin)return false;
  (async()=>{try{const r=await auRpc('nb_check_pin',{p:pin});
@@ -979,15 +979,15 @@ function bonHtml(o){if(o.svc)return svcHtml(o);const s=S.bon,t=o.ts||Date.now(),
  <div class="bs"><span>SUMME</span><span>${eur(tot)}</span></div>${pay}${bank}${s.foot?`<hr><div class="bc">${br(s.foot)}</div>`:''}<div class="bc">&nbsp;</div>`}
 function svcHtml(o){const s=S.bon;return `<div class="bc bb" style="font-size:24px">${esc(s.svcHead||'SERVICE')}</div><div class="bc">${dtf(Date.now())}</div><hr><div class="svcn">#${o.no}${o.name?' '+esc(o.name):''}</div>${o.cashier?`<div>Kassierer: ${esc(o.cashier)}</div>`:''}<hr>
  <table class="svct">${o.entries.map(e=>`<tr><td class="q">${e.qty}×</td><td>${esc(e.label)}</td></tr>`).join('')}</table><hr><div class="bc">&nbsp;</div>`}
-function bonPrint(o){const w=S.bon.width=='58'?58:80,b=$('bonp');b.innerHTML=bonHtml(o);b.style.width=(w-8)+'mm';
+function bonPrint(o,cb){const w=S.bon.width=='58'?58:80,b=$('bonp');b.innerHTML=bonHtml(o);b.style.width=(w-8)+'mm';
  const st=document.createElement('style');st.id='bonpage';st.textContent='@page{size:'+w+'mm auto;margin:3mm}';document.head.appendChild(st);document.body.classList.add('bp');
- const done=()=>{document.body.classList.remove('bp');st.remove();b.innerHTML='';window.removeEventListener('afterprint',done)};window.addEventListener('afterprint',done);
+ const done=()=>{document.body.classList.remove('bp');st.remove();b.innerHTML='';window.removeEventListener('afterprint',done);cb&&cb()};window.addEventListener('afterprint',done);
  const go=()=>setTimeout(()=>{try{window.print()}catch(e){done()}},60);const im=b.querySelector('img');if(im&&!im.complete){im.onload=im.onerror=go}else go()}
-function printBon(cid){const c=S.customers.find(x=>x.id==cid);if(!c.entries.length){toast('Keine Buchungen zum Drucken','#d9822b');return}bonPrint({no:c.no,name:(c.first+' '+c.last).trim(),cashier:cname(),entries:c.entries})}
-function zPrint(id){const a=S.archive.find(x=>x.id==id);if(a)bonPrint({no:a.no,name:a.name,cashier:a.cashier,entries:a.entries,method:a.method,ts:a.paidAt})}
+function printBon(cid){const c=S.customers.find(x=>x.id==cid);if(!c.entries.length){toast('Keine Buchungen zum Drucken','#d9822b');return}printOut({no:c.no,name:(c.first+' '+c.last).trim(),cashier:cname(),entries:c.entries})}
+function zPrint(id){const a=S.archive.find(x=>x.id==id);if(a)printOut({no:a.no,name:a.name,cashier:a.cashier,entries:a.entries,method:a.method,ts:a.paidAt})}
 const TESTE=[{qty:2,label:'Pils 0,5 L',price:350},{qty:1,label:'Cola 0,33 L',price:250},{qty:1,label:'Getränkebon',price:-200}];
-function testBon(m){bonPrint({no:12,name:'Max Muster',cashier:'Anna',entries:TESTE,method:m||'Bar'})}
-function testSvc(){bonPrint({svc:true,no:12,name:'Max Muster',cashier:'Anna',entries:[{qty:3,label:'Pils 0,5 L',price:0},{qty:1,label:'Cola 0,33 L',price:0}]})}
+function testBon(m){printOut({no:12,name:'Max Muster',cashier:'Anna',entries:TESTE,method:m||'Bar'})}
+function testSvc(){printOut({svc:true,no:12,name:'Max Muster',cashier:'Anna',entries:[{qty:3,label:'Pils 0,5 L',price:0},{qty:1,label:'Cola 0,33 L',price:0}]})}
 function logoFile(f,cb){if(!f)return;const img=new Image(),u=URL.createObjectURL(f);
  img.onload=()=>{let W=Math.min(384,img.width),H=Math.round(img.height*W/img.width);if(H>260){W=Math.round(W*260/H);H=260}
   const c=document.createElement('canvas');c.width=W;c.height=H;const x=c.getContext('2d');x.fillStyle='#fff';x.fillRect(0,0,W,H);x.drawImage(img,0,0,W,H);
@@ -1009,11 +1009,11 @@ function formBonLayout(){const s=S.bon,yn=(n,v)=>`<select name="${n}"><option va
 
 /* ===== Konten & Rechte (Konten verwaltet die Edge Function „nb-admin“, Rechte erzwingt die Datenbank) ===== */
 const ACC={list:null,busy:false,err:''};
-async function accCall(action,body){const r=await fetch(NBCFG.url+'/functions/v1/nb-admin',{method:'POST',headers:{apikey:NBCFG.key,Authorization:'Bearer '+await auToken(),'Content-Type':'application/json'},body:JSON.stringify({action,...(body||{})})});
+async function accCall(action,body){const tk=await auToken();const r=await fetch(NBCFG.url+'/functions/v1/nb-admin',{method:'POST',headers:{apikey:NBCFG.key,Authorization:'Bearer '+(/^eyJ/.test(NBCFG.key)?NBCFG.key:tk),'x-nb-token':tk,'Content-Type':'application/json'},body:JSON.stringify({action,...(body||{})})});
  let j={};try{j=await r.json()}catch(e){}
- if(!r.ok){const e=new Error(r.status==404?'nicht_eingerichtet':(j.error||'fehler_'+r.status));e.status=r.status;throw e}return j}
-const ACCERR={nicht_eingerichtet:'Die Funktion „nb-admin“ ist in Supabase noch nicht eingerichtet (siehe Anleitung „Konten-Funktion“).',nur_admin:'Die Admin-Anmeldung ist abgelaufen. Bitte die PIN neu eingeben.',letzter_admin:'Das ist der letzte Admin und darf nicht geändert werden.',selbst:'Das eigene Konto kann hier nicht gesperrt oder herabgestuft werden.',passwort_kurz:'Das Passwort braucht mindestens 8 Zeichen.',mail_ungueltig:'Die E-Mail-Adresse ist ungültig.',existiert:'Zu dieser E-Mail gibt es schon ein Konto.'};
-const accMsg=e=>ACCERR[e.message]||auNet(e);
+ if(!r.ok){const e=new Error(r.status==404?'nicht_eingerichtet':(j.error||'fehler_'+r.status));e.status=r.status;e.detail=String(j.detail||j.message||j.msg||j.code||'');throw e}return j}
+const ACCERR={fehler_401:'Supabase hat die Anfrage abgewiesen. In der Edge Function „nb-admin“ bitte „Verify JWT with legacy secret“ ausschalten (siehe Update-Anleitung, Punkt 4).',fehler_403:'Dafür fehlt die Berechtigung. Bitte die Admin-PIN neu eingeben.',nicht_angemeldet:'Die Anmeldung ist abgelaufen. Bitte neu anmelden.',nicht_eingerichtet:'Die Funktion „nb-admin“ ist in Supabase noch nicht eingerichtet (siehe Anleitung „Konten-Funktion“).',nur_admin:'Die Admin-Anmeldung ist abgelaufen. Bitte die PIN neu eingeben.',letzter_admin:'Das ist der letzte Admin und darf nicht geändert werden.',selbst:'Das eigene Konto kann hier nicht gesperrt oder herabgestuft werden.',passwort_kurz:'Das Passwort braucht mindestens 8 Zeichen.',mail_ungueltig:'Die E-Mail-Adresse ist ungültig.',existiert:'Zu dieser E-Mail gibt es schon ein Konto.'};
+const accMsg=e=>(ACCERR[e.message]||auNet(e))+(e.detail?' ['+e.status+': '+e.detail+']':'');
 async function accLoad(){if(ACC.busy)return;ACC.busy=true;try{const r=await accCall('list');ACC.list=r.users||[];ACC.err=''}catch(e){ACC.err=accMsg(e);if(ACC.list===null)ACC.list=[]}ACC.busy=false;if(adminOn&&atab=='konten'&&canRebuild())render()}
 async function accDo(action,body,okMsg){try{await accCall(action,body);toast(okMsg||'✔ Erledigt',null,2500);await accLoad();return true}catch(e){alert(accMsg(e));return false}}
 function formKonto(){modal('Neues Konto',`<input name="e" type="email" placeholder="E-Mail-Adresse"><input name="p" type="password" placeholder="Start-Passwort (mind. 8 Zeichen)"><label>Rolle<select name="r"><option value="kasse">Kasse</option><option value="admin">Admin</option></select></label><p class="mut">Die Person kann das Passwort danach selbst ändern („Mein Konto“) oder über „Passwort vergessen“.</p>`,o=>{
@@ -1091,7 +1091,43 @@ async function verCheck(){if(verShown||!AUTH.s||navigator.onLine===false)return;
    $('nvb').onclick=async()=>{$('nvb').disabled=true;try{await dbFlush()}catch(e){alert('Es warten noch nicht gesendete Änderungen. Bitte erst warten, bis „Live in Supabase gesichert“ angezeigt wird.');$('nvb').disabled=false;return}
     try{const rg=await navigator.serviceWorker.getRegistration();if(rg)await rg.update()}catch(e){}location.reload()}}}catch(e){}}
 setTimeout(verCheck,20000);setInterval(verCheck,600000);document.addEventListener('visibilitychange',()=>{if(!document.hidden)setTimeout(verCheck,1500)});
-const APP_VERSION='2026.11.02';
+/* ===== Zentraler Druckplatz: alle Geräte schicken Bons an die Druckstation (PC mit Bon-Drucker) ===== */
+const DEVK='navibar-dev';let DEV={station:false,mode:'station'};
+try{Object.assign(DEV,JSON.parse(localStorage.getItem(DEVK)||'{}'))}catch(e){}
+const devSave=()=>{try{localStorage.setItem(DEVK,JSON.stringify(DEV))}catch(e){}};
+const ST={busy:false,last:0,pinged:0,printed:0,err:'',seen:{t:0,on:false,name:''}};
+async function stationOn(){if(Date.now()-ST.seen.t<10000)return ST.seen.on;
+ try{const r=await auRpc('nb_print_status');ST.seen={t:Date.now(),on:!!r&&r.secs!=null&&r.secs<75,name:(r&&r.name)||''}}catch(e){ST.seen={t:Date.now(),on:false,name:''}}return ST.seen.on}
+async function printOut(o){if(DEV.station||DEV.mode=='local')return bonPrint(o);
+ const send=async()=>{try{await auRpc('nb_print_enqueue',{p_kind:o.svc?'svc':'bon',p_payload:o});toast('🖨 An Druckstation gesendet',null,1800)}
+  catch(e){ask('An die Druckstation senden ging nicht ('+auNet(e)+').\n\nHier auf diesem Gerät drucken?',()=>bonPrint(o),'Hier drucken')}};
+ if(await stationOn())return send();
+ ask('Die Druckstation ist gerade nicht erreichbar.\n\nTrotzdem einreihen (druckt, sobald sie wieder da ist) oder hier drucken?',send,'Einreihen','g',()=>bonPrint(o),'Hier drucken')}
+const printWait=o=>new Promise(res=>{let d=false;const f=()=>{if(!d){d=true;res()}};setTimeout(f,30000);try{bonPrint(o,f)}catch(e){f()}});
+async function stPoll(){if(ST.busy||!DEV.station||!AUTH.s)return;ST.busy=true;ST.last=Date.now();
+ try{const l=await auRpc('nb_print_pending');ST.err='';
+  for(const j of (l||[])){const got=await auRpc('nb_print_claim',{p_id:j.id});if(!got)continue;await printWait(j.payload);ST.printed++}}
+ catch(e){if(e.message!='abgemeldet')ST.err=auNet(e)}
+ ST.busy=false;stUi()}
+function stLoop(){if(!DEV.station||!AUTH.s||!DB.started||AUTH.rec)return;const n=Date.now();
+ if(n-ST.pinged>20000){ST.pinged=n;auRpc('nb_print_ping',{p_name:'Druckstation'}).catch(()=>{})}
+ if(!ST.busy&&n-ST.last>3000)stPoll()}
+setInterval(stLoop,1000);
+function stUi(){const e=$('stinfo');if(e)e.innerHTML=stInfoHtml()}
+const stInfoHtml=()=>DEV.station?`<b style="color:${ST.err?'var(--red)':'var(--green)'}">${ST.err?'Fehler: '+esc(ST.err):'aktiv – wartet auf Druckaufträge'}</b><br><small class="mut">Heute gedruckt (seit Start dieser Seite): ${ST.printed}</small>`:'';
+function stSet(on){DEV.station=on;devSave();ST.pinged=0;ST.last=0;if(on){stLoop();toast('🖨 Dieses Gerät ist jetzt die Druckstation',null,2500)}dbUi();if($('stbox'))$('stbox').innerHTML=stBox()}
+function stMode(m){DEV.mode=m;devSave();if($('stbox'))$('stbox').innerHTML=stBox()}
+function stBox(){return `<h3>🖨 Druckplatz</h3>
+ <p class="mut">Die <b>Druckstation</b> ist der PC mit dem Bon-Drucker. Alle anderen Geräte (PC, Handy) schicken Quittungen und Service-Bons dorthin. Die Seite muss dort nur geöffnet und angemeldet sein – ein Kassierer muss nicht gewählt sein.</p>
+ <div class="row"><button class="${DEV.station?'g':''}" onclick="stSet(${!DEV.station})">${DEV.station?'✔ Dieses Gerät ist die Druckstation (ausschalten)':'Dieses Gerät zur Druckstation machen'}</button></div>
+ <div id="stinfo">${stInfoHtml()}</div>
+ ${DEV.station?`<p class="mut">Für Druck ohne Dialog Chrome so starten: <code>chrome.exe --kiosk-printing</code> und den Bon-Drucker als Standarddrucker einstellen. Diese Seite offen lassen.</p><div class="row"><button onclick="stRecent()">Letzte Aufträge anzeigen</button></div><div id="strec"></div>`
+ :`<label>Drucken von diesem Gerät<select onchange="stMode(this.value)"><option value="station" ${DEV.mode!='local'?'selected':''}>an die Druckstation schicken</option><option value="local" ${DEV.mode=='local'?'selected':''}>hier auf diesem Gerät drucken</option></select></label><div class="row"><button onclick="stCheck()">Druckstation prüfen</button></div><div id="strec"></div>`}`}
+async function stCheck(){ST.seen.t=0;const on=await stationOn();$('strec').innerHTML=on?'<b style="color:var(--green)">Druckstation ist erreichbar.</b>':'<b style="color:var(--red)">Keine Druckstation erreichbar</b> (läuft die Kasse dort, ist sie angemeldet und als Druckstation eingestellt?)'}
+async function stRecent(){try{const l=await auRpc('nb_print_recent',{p_limit:12});window.__stl=l;
+ $('strec').innerHTML=l.map((j,i)=>`<div class="card zrow"><small class="mut">${dtf(Date.parse(j.created_at))} · ${esc(j.email||'')} · ${j.kind=='svc'?'Service-Bon':'Bon'} · ${j.done_at?'gedruckt':'<b style="color:var(--orange)">wartet</b>'}</small><div>#${j.payload.no} ${esc(j.payload.name||'')}</div><div class="row" style="margin:4px 0 0"><button onclick="bonPrint(window.__stl[${i}].payload)">Nochmal drucken</button></div></div>`).join('')||'<p class="mut">Noch keine Aufträge.</p>'}catch(e){$('strec').innerHTML='<p class="mut">'+esc(auNet(e))+'</p>'}}
+function stDialog(){const o=document.createElement('div');o.className='ov';o.style.zIndex=30;o.innerHTML=`<div class="box" style="max-width:640px"><div id="stbox">${stBox()}</div><div class="row"><button id="stx">Schließen</button></div></div>`;document.body.appendChild(o);o.querySelector('#stx').onclick=()=>o.remove()}
+const APP_VERSION='2026.11.03';
 if('serviceWorker' in navigator&&/^https?:/.test(location.protocol))navigator.serviceWorker.register('sw.js').catch(()=>{});
 render();setInterval(autoDeact,3600000);
 </script></body></html>
