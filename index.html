@@ -209,7 +209,7 @@ td,th{padding:14px 10px}
 /* ===== SUPABASE-ZUGANG – hier einmal eintragen (Project Settings -> API) =====
    Der "anon/publishable"-Key ist öffentlich gedacht. Geschützt sind die Daten durch Login und Zugriffsregeln.
    NIE den "service_role"-Key hier eintragen. Der Admin kann diese Werte in der Kasse nicht ändern. */
-const NBCFG={url:'https://DEIN-PROJEKT.supabase.co',key:'DEIN-ANON-KEY'};
+const NBCFG={url:'https://zxctszrewffuloqmlbbu.supabase.co',key:'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp4Y3RzenJld2ZmdWxvcW1sYmJ1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTM2MDQ1MDcsImV4cCI6MjEwOTE4MDUwN30.mqoK6fircId1lISkabP6YSG4zr24AaBCM5a3Qs1A2Nw'};
 NBCFG.url=NBCFG.url.trim().replace(/\/+$/,'').replace(/\/(rest|auth)\/v1$/,'');NBCFG.key=NBCFG.key.trim();   // schadet nicht, falls ein Schrägstrich am Ende oder ein Pfad mitkopiert wurde
 /* ===== QR-Encoder (Byte-Modus, ECC L, Version 1-20, Maske 0) – komplett offline ===== */
 const QR=(()=>{
